@@ -20,39 +20,31 @@ try {
     die("Connection failed: " . $e->getMessage());
 }
 
-// Lấy user_id từ session
+// Lấy user_id và username từ session
 $userId = $_SESSION['user_id'];
-// ========== LẤY DANH MỤC TỪ BẢNG products ==========
-$categoryQuery = $conn->query("SELECT DISTINCT category FROM products");
-$categories = $categoryQuery->fetchAll(PDO::FETCH_ASSOC);
+$username = $_SESSION['user_name'] ?? 'User'; // Lấy username từ session, mặc định là 'User' nếu không có
+$currentUser = isset($_SESSION['user_name']) ? [
+    'username' => $_SESSION['user_name'],
+    'role'     => $_SESSION['user_role'] ?? 'user'
+] : null;
 
-// Xử lý bộ lọc
-$statusFilter = isset($_GET['status']) ? $_GET['status'] : 'all';
-$startDate = isset($_GET['start_date']) ? $_GET['start_date'] : '1970-01-01';
-$endDate = isset($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-d');
-
-// Xây dựng câu truy vấn dựa trên bộ lọc
-$query = "SELECT * FROM orders WHERE user_id = :user_id";
-$params = [':user_id' => $userId];
-
-if ($statusFilter !== 'all') {
-    $query .= " AND status = :status";
-    $params[':status'] = $statusFilter;
-}
-
-$query .= " AND created_at BETWEEN :start_date AND :end_date";
-$params[':start_date'] = $startDate . ' 00:00:00';
-$params[':end_date'] = $endDate . ' 23:59:59';
-
-$query .= " ORDER BY created_at DESC";
-
-// Thực hiện truy vấn
-$orderStmt = $conn->prepare($query);
-foreach ($params as $key => $value) {
-    $orderStmt->bindValue($key, $value);
-}
-$orderStmt->execute();
-$orders = $orderStmt->fetchAll(PDO::FETCH_ASSOC);
+// Lấy dữ liệu đơn hàng của người dùng hiện tại và gán thứ tự riêng
+$stmt = $conn->prepare("
+    SELECT 
+        (@row_number:=@row_number + 1) AS order_number,
+        o.id,
+        o.created_at AS date,
+        'Cash' AS payment,
+        o.status,
+        o.total_price AS total
+    FROM orders o
+    CROSS JOIN (SELECT @row_number:=0) AS init
+    WHERE o.user_id = :user_id
+    ORDER BY o.created_at DESC
+");
+$stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
+$stmt->execute();
+$orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -60,82 +52,103 @@ $orders = $orderStmt->fetchAll(PDO::FETCH_ASSOC);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order History - Mahiru Shop</title>
-    <link rel="stylesheet" href="./css/styles.css">
-    <link rel="stylesheet" href="./css/order_history.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <title>Order History - MAHIRU.</title>
+    <link rel="stylesheet" href="./css/styles.css"> <!-- Link file styles.css hiện có -->
+    <link rel="stylesheet" href="./css/order_history.css"> <!-- File CSS riêng cho order_history -->
+    <!-- Thêm Font Awesome nếu cần các icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 <body>
     <header>
-      <div class="top-bar">
-        <div class="container">
-          <div class="contact-info">
-            <span><i class="fas fa-phone"></i> 012345678</span>
-            <span><i class="fas fa-envelope"></i> mahiru@gmail.com</span>
-            <span><i class="fas fa-map-marker-alt"></i> 1104 Wall Street</span>
-          </div>
-          <div class="user-actions">
-            <i class="fas fa-user"></i>
-            <span class="name"><?php echo htmlspecialchars($_SESSION['user_name']); ?></span>
-            <div class="login-dropdown">
-                <a href="order_history.php" class="login-option">Order History</a>
-                <a href="index.php" class="login-option">Log out</a>
+        <div class="top-bar">
+            <div class="container">
+                <div class="contact-info">
+                    <span><i class="fas fa-phone"></i> 012345678</span>
+                    <span><i class="fas fa-envelope"></i> mahiru@gmail.com</span>
+                    <span><i class="fas fa-map-marker-alt"></i> 1104 Wall Street</span>
+                </div>
+                <div class="user-actions">
+                    <?php if ($currentUser): ?>
+                        <i class="fas fa-user"></i>
+                        <?php if (strtolower($currentUser['role']) === 'admin'): ?>
+                            <span class="name">ADMIN</span>
+                        <?php else: ?>
+                            <span class="name"><?php echo htmlspecialchars($currentUser['username']); ?></span>
+                        <?php endif; ?>
+                        <div class="login-dropdown">
+                            <?php if (strtolower($currentUser['role']) === 'admin'): ?>
+                                <a href="edit.php" class="login-option">Edit</a>
+                            <?php else: ?>
+                                <a href="order_history.php" class="login-option">Order history</a>
+                            <?php endif; ?>
+                            <a href="index.php" class="login-option">Log out</a>
+                        </div>
+                    <?php else: ?>
+                        <a class="login-link">
+                            <i class="fas fa-user"></i>
+                            <span class="name">Login/Sign up</span>
+                        </a>
+                        <div class="login-dropdown">
+                            <a href="login.php" class="login-option">Login</a>
+                            <a href="sign_up.php" class="login-option">Sign up</a>
+                        </div>
+                    <?php endif; ?>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
-      <div class="main-header">
-        <div class="container">
-          <div class="logo">
-            <a href="index_account.php" class="logo-link"><h1>MAHIRU<span>.</span></h1></a>
-          </div>
-          <div class="search-bar">
-            <form action="search_account.php" method="GET">
-                <input type="text" name="name" placeholder="Search here" />
-                <button type="submit" class="search-button">Search</button>
-            </form>
-          </div>
-          <div class="user-menu">
-            <a href="cart.php" class="icon"><i class="fas fa-shopping-cart"></i></a>
-          </div>
+        <div class="main-header">
+            <div class="container">
+                <div class="logo">
+                    <a href="index_account.php" class="logo-link"><h1>MAHIRU<span>.</span></h1></a>
+                </div>
+                <div class="search-bar">
+                    <form action="search_account.php" method="GET">
+                        <input type="text" name="name" placeholder="Search here" value="">
+                        <input type="hidden" name="category" value="all">
+                        <input type="hidden" name="price" value="99999999">
+                        <button type="submit" class="search-button">Search</button>
+                    </form>
+                </div>
+                <div class="user-menu">
+                    <a href="cart.php" class="icon"><i class="fas fa-shopping-cart"></i></a>
+                </div>
+            </div>
         </div>
-      </div>
-      <nav>
-        <div class="container">
-        <ul class="category-list">
+        <nav class="category-nav">
+            <div class="container">
+                <ul class="category-list">
                     <li><a href="index_account.php">Home</a></li>
-                    <?php foreach ($categories as $cat): ?>
-                        <li><a href="index_account.php?category=<?= urlencode($cat['category']) ?>"> <?= htmlspecialchars($cat['category']) ?> </a></li>
+                    <?php
+                    $categoryQuery = $conn->query("SELECT DISTINCT category FROM products");
+                    $categories = $categoryQuery->fetchAll(PDO::FETCH_ASSOC);
+                    foreach ($categories as $cat): ?>
+                        <li><a href="index_account.php?category=<?= urlencode($cat['category']) ?>"><?= htmlspecialchars($cat['category']) ?></a></li>
                     <?php endforeach; ?>
                 </ul>
-        </div>
-      </nav>
+            </div>
+        </nav>
     </header>
 
     <main>
         <div class="container">
             <div class="order-history-container">
-                <h1 class="page-title">Order History</h1>
-                
+                <h2 class="page-title">Order History</h2>
                 <div class="order-filters">
-                    <form method="GET" action="order_history.php" class="order-filters">
-                        <div class="filter-tabs">
-                            <button type="submit" name="status" value="all" class="filter-tab <?php echo $statusFilter === 'all' ? 'active' : ''; ?>">All Orders</button>
-                            <button type="submit" name="status" value="pending" class="filter-tab <?php echo $statusFilter === 'pending' ? 'active' : ''; ?>">Pending</button>
-                            <button type="submit" name="status" value="processing" class="filter-tab <?php echo $statusFilter === 'processing' ? 'active' : ''; ?>">Processing</button>
-                            <button type="submit" name="status" value="delivered" class="filter-tab <?php echo $statusFilter === 'delivered' ? 'active' : ''; ?>">Delivered</button>
-                            <button type="submit" name="status" value="cancelled" class="filter-tab <?php echo $statusFilter === 'cancelled' ? 'active' : ''; ?>">Cancelled</button>
-                        </div>
-                        <div class="date-filter">
-                            <input type="date" name="start_date" class="date-input" value="<?php echo htmlspecialchars($startDate); ?>">
-                            <span>To</span>
-                            <input type="date" name="end_date" class="date-input" value="<?php echo htmlspecialchars($endDate); ?>">
-                        </div>
-                    </form>
+                    <div class="filter-tabs">
+                        <button class="filter-tab active" data-status="all">All Orders</button>
+                        <button class="filter-tab" data-status="pending">Pending</button>
+                        <button class="filter-tab" data-status="processing">Processing</button>
+                        <button class="filter-tab" data-status="delivered">Delivered</button>
+                        <button class="filter-tab" data-status="cancelled">Cancelled</button>
+                    </div>
+                    <div class="date-filter">
+                        <input type="date" id="from-date" class="date-input" value="1970-01-01">
+                        <input type="date" id="to-date" class="date-input" value="<?php echo date('Y-m-d'); ?>">
+                    </div>
                 </div>
 
-                <div class="order-table">
-                    <table>
+                <div class="order-table-container">
+                    <table class="order-table">
                         <thead>
                             <tr>
                                 <th>Order ID</th>
@@ -147,35 +160,33 @@ $orders = $orderStmt->fetchAll(PDO::FETCH_ASSOC);
                             </tr>
                         </thead>
                         <tbody>
+                            <?php foreach ($orders as $order): ?>
+                                <tr>
+                                    <td data-label="Order ID">#<?php echo $order['order_number']; ?></td>
+                                    <td data-label="Date"><?php echo date('Y-m-d', strtotime($order['date'])); ?></td>
+                                    <td data-label="Payment"><?php echo htmlspecialchars($order['payment']); ?></td>
+                                    <td data-label="Status"><span class="status-badge <?php echo strtolower($order['status']); ?>"><?php echo htmlspecialchars($order['status']); ?></span></td>
+                                    <td data-label="Total">$<?php echo number_format($order['total'], 2); ?></td>
+                                    <td data-label="Action"><a href="order_id_history.php?order_id=<?php echo $order['id']; ?>" class="details-btn">Details</a></td>
+                                </tr>
+                            <?php endforeach; ?>
                             <?php if (empty($orders)): ?>
                                 <tr>
-                                    <td colspan="6" style="text-align: center;">No orders found.</td>
+                                    <td colspan="6">No orders found.</td>
                                 </tr>
-                            <?php else: ?>
-                                <?php foreach ($orders as $order): ?>
-                                    <tr>
-                                        <td>#<?php echo htmlspecialchars($order['id']); ?></td>
-                                        <td><?php echo htmlspecialchars(date('Y-m-d', strtotime($order['created_at']))); ?></td>
-                                        <td>Cash</td> <!-- Payment method không có trong bảng orders, tạm để "Cash" -->
-                                        <td><span class="status-badge <?php echo htmlspecialchars(strtolower($order['status'])); ?>"><?php echo htmlspecialchars(ucfirst($order['status'])); ?></span></td>
-                                        <td>$<?php echo number_format($order['total_price'], 2); ?></td>
-                                        <td>
-                                            <a href="order_id_history.php?order_id=<?php echo htmlspecialchars($order['id']); ?>" class="details-btn">Details</a>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
                             <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
             </div>
-        </div>
-    </main>
+        </main>
 
-    <footer>
-      <div class="container">
-        <p>&copy; Mahiru Shop. We are pleased to serve you.</p>
-      </div>
-    </footer>
+        <footer>
+            <div class="container">
+                <p>© Mahiru Shop. We are pleased to serve you.</p>
+            </div>
+        </footer>
+
+    <script src="./js/order_history.js"></script>
 </body>
 </html>
