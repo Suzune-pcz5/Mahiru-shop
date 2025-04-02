@@ -6,7 +6,7 @@ if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
-
+    
 // Kiểm tra nếu form được gửi
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header("Location: checkout.php");
@@ -37,7 +37,6 @@ $state = isset($_POST['state']) ? trim($_POST['state']) : '';
 $zipCode = isset($_POST['zip_code']) ? trim($_POST['zip_code']) : '';
 $country = isset($_POST['country']) ? trim($_POST['country']) : '';
 $totalPrice = isset($_POST['total']) ? (float)$_POST['total'] : 0;
-$payment = isset($_POST['method_payment']) ? trim($_POST['method_payment']) : ''; // Sửa từ $_POST['payment'] thành $_POST['method_payment']
 
 // Gộp các trường địa chỉ thành một chuỗi
 $addressParts = array_filter([$streetAddress, $city, $state, $zipCode, $country], function($value) {
@@ -46,7 +45,7 @@ $addressParts = array_filter([$streetAddress, $city, $state, $zipCode, $country]
 $address = implode(', ', $addressParts);
 
 // Kiểm tra dữ liệu đầu vào
-if (empty($name) || empty($address) || $totalPrice <= 0 || empty($payment)) {
+if (empty($name) || empty($address) || $totalPrice <= 0) {
     // Nếu dữ liệu không hợp lệ, chuyển hướng về checkout.php với thông báo lỗi
     $_SESSION['error'] = "Please fill in all required fields correctly.";
     header("Location: checkout.php");
@@ -77,14 +76,13 @@ $conn->beginTransaction();
 try {
     // Lưu đơn hàng vào bảng orders
     $orderStmt = $conn->prepare("
-        INSERT INTO orders (user_id, name, address, total_price, method_payment, status)
-        VALUES (:user_id, :name, :address, :total_price, :method_payment, 'pending')
+        INSERT INTO orders (user_id, name, address, total_price, status)
+        VALUES (:user_id, :name, :address, :total_price, 'pending')
     ");
     $orderStmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
     $orderStmt->bindValue(':name', $name, PDO::PARAM_STR);
     $orderStmt->bindValue(':address', $address, PDO::PARAM_STR);
     $orderStmt->bindValue(':total_price', $totalPrice, PDO::PARAM_STR);
-    $orderStmt->bindValue(':method_payment', $payment, PDO::PARAM_STR);
     $orderStmt->execute();
 
     // Lấy ID của đơn hàng vừa tạo
@@ -101,6 +99,16 @@ try {
         $detailStmt->bindValue(':quantity', $item['quantity'], PDO::PARAM_INT);
         $detailStmt->bindValue(':price', $item['price'], PDO::PARAM_STR);
         $detailStmt->execute();
+
+        // Tăng sold_count trong bảng products
+        $updateSoldStmt = $conn->prepare("
+            UPDATE products 
+            SET sold_count = sold_count + :quantity 
+            WHERE id = :product_id
+        ");
+        $updateSoldStmt->bindValue(':quantity', $item['quantity'], PDO::PARAM_INT);
+        $updateSoldStmt->bindValue(':product_id', $item['product_id'], PDO::PARAM_INT);
+        $updateSoldStmt->execute();
     }
 
     // Xóa giỏ hàng của người dùng
@@ -113,7 +121,7 @@ try {
 
     // Lưu thông tin đơn hàng vào session để hiển thị trên trang xác nhận
     $_SESSION['order_id'] = $orderId;
-    $_SESSION['order_success'] = "Your order has been placed successfully";
+    $_SESSION['order_success'] = "Your order has been placed successfully!";
 
     // Chuyển hướng đến trang xác nhận đơn hàng
     header("Location: order_confirmation.php");
