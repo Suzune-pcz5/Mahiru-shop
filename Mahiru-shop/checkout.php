@@ -22,9 +22,6 @@ try {
 
 // Lấy user_id từ session
 $userId = $_SESSION['user_id'];
-// ========== LẤY DANH MỤC TỪ BẢNG products ==========
-$categoryQuery = $conn->query("SELECT DISTINCT category FROM products");
-$categories = $categoryQuery->fetchAll(PDO::FETCH_ASSOC);
 
 // Lấy dữ liệu giỏ hàng từ cơ sở dữ liệu
 $stmt = $conn->prepare("
@@ -99,11 +96,14 @@ foreach ($cartItems as $item) {
         </div>
         <nav class="category-nav">
             <div class="container">
-            <ul class="category-list">
+                <ul class="category-list">
                     <li><a href="index_account.php">Home</a></li>
-                    <?php foreach ($categories as $cat): ?>
-                        <li><a href="index_account.php?category=<?= urlencode($cat['category']) ?>"> <?= htmlspecialchars($cat['category']) ?> </a></li>
-                    <?php endforeach; ?>
+                    <li><a href="category_acc_gundam.php">Gundam</a></li>
+                    <li><a href="category_acc_kamen_rider.php">Kamen Rider</a></li>
+                    <li><a href="category_acc_standee.php">Standee</a></li>
+                    <li><a href="category_acc_keychain.php">Keychain</a></li>
+                    <li><a href="category_acc_plush.php">Plush</a></li>
+                    <li><a href="category_acc_figure.php">Figure</a></li>
                 </ul>
             </div>
         </nav>
@@ -124,38 +124,13 @@ foreach ($cartItems as $item) {
                         <input type="tel" name="phone" placeholder="Phone Number" required>
                     </div>
                     <div class="payment-info">
-    <h2>Payment Method</h2>
-    <div class="payment-options">
-        <label><input type="radio" name="payment" value="cash" onchange="savePayment(this.value)" checked>Cash</label>
-        <label><input type="radio" name="payment" value="bank_transfer" onchange="savePayment(this.value)">Money Transfer</label>
-        <label><input type="radio" name="payment" value="credit_card" onchange="savePayment(this.value)">Credit/Debit Card</label>
-    </div>
-    <!-- Thêm trường ẩn để lưu method_payment -->
-    <input type="hidden" name="method_payment" id="method_payment" value="cash">
-</div>
-
-<script>
-function savePayment(paymentMethod) {
-    // Cập nhật giá trị của trường ẩn
-    document.getElementById('method_payment').value = paymentMethod;
-
-    // Gửi AJAX để cập nhật method_payment trong cơ sở dữ liệu
-    fetch("checkout.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: "payment=" + encodeURIComponent(paymentMethod)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === "success") {
-            console.log("Phương thức thanh toán đã cập nhật:", paymentMethod);
-        } else {
-            console.error("Lỗi cập nhật:", data.message);
-        }
-    })
-    .catch(error => console.error("Lỗi fetch:", error));
-}
-</script>
+                        <h2>Payment Method</h2>
+                        <div class="payment-options">
+                            <label><input type="radio" name="payment" value="cash" checked> Cash on Delivery</label>
+                            <label><input type="radio" name="payment" value="bank_transfer"> Bank Transfer</label>
+                            <label><input type="radio" name="payment" value="credit_card"> Credit/Debit Card</label>
+                        </div>
+                    </div>
                 </div>
                 <div class="order-summary">
                     <h2>Order Summary</h2>
