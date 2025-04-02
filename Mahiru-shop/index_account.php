@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// ========== KẾT NỐI CSDL ==========
+// ========== DATABASE CONNECTION ==========
 $host = 'localhost';
 $dbname = 'mahiru_shop';
 $dbUsername = 'root';
@@ -14,18 +14,19 @@ try {
     die("Connection failed: " . $e->getMessage());
 }
 
-// ========== LẤY THÔNG TIN USER TỪ SESSION ==========
-$currentUser = isset($_SESSION['user_name']) ? [
+// ========== GET USER INFO FROM SESSION ==========
+$currentUser = isset($_SESSION['user_id']) ? [
+    'id' => $_SESSION['user_id'],
     'username' => $_SESSION['user_name'],
-    'role'     => $_SESSION['user_role'] ?? 'user'
+    'role' => $_SESSION['user_role'] ?? 'user'
 ] : null;
 
-// ========== XỬ LÝ THÊM SẢN PHẨM VÀO GIỎ HÀNG ==========
+// ========== ADD TO CART FUNCTIONALITY ==========
 if (isset($_GET['add_to_cart']) && isset($_SESSION['user_id'])) {
     $productId = (int)$_GET['add_to_cart'];
     $userId = $_SESSION['user_id'];
 
-    // Kiểm tra xem sản phẩm đã có trong giỏ hàng chưa
+    // Check if product already in cart
     $checkStmt = $conn->prepare("SELECT * FROM cart WHERE user_id = :user_id AND product_id = :product_id");
     $checkStmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
     $checkStmt->bindValue(':product_id', $productId, PDO::PARAM_INT);
@@ -33,7 +34,7 @@ if (isset($_GET['add_to_cart']) && isset($_SESSION['user_id'])) {
     $existingItem = $checkStmt->fetch(PDO::FETCH_ASSOC);
 
     if ($existingItem) {
-        // Nếu sản phẩm đã có, tăng số lượng
+        // If exists, increase quantity
         $newQuantity = $existingItem['quantity'] + 1;
         $updateStmt = $conn->prepare("UPDATE cart SET quantity = :quantity WHERE user_id = :user_id AND product_id = :product_id");
         $updateStmt->bindValue(':quantity', $newQuantity, PDO::PARAM_INT);
@@ -41,7 +42,7 @@ if (isset($_GET['add_to_cart']) && isset($_SESSION['user_id'])) {
         $updateStmt->bindValue(':product_id', $productId, PDO::PARAM_INT);
         $updateStmt->execute();
     } else {
-        // Nếu sản phẩm chưa có, thêm mới
+        // If new, add to cart
         $insertStmt = $conn->prepare("INSERT INTO cart (user_id, product_id, quantity) VALUES (:user_id, :product_id, 1)");
         $insertStmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
         $insertStmt->bindValue(':product_id', $productId, PDO::PARAM_INT);
@@ -53,11 +54,11 @@ if (isset($_GET['add_to_cart']) && isset($_SESSION['user_id'])) {
     exit;
 }
 
-// ========== LẤY DANH MỤC TỪ BẢNG products ==========
+// ========== GET CATEGORIES FROM PRODUCTS TABLE ==========
 $categoryQuery = $conn->query("SELECT DISTINCT category FROM products");
 $categories = $categoryQuery->fetchAll(PDO::FETCH_ASSOC);
 
-// ========== XỬ LÝ TÌM KIẾM, LỌC SẢN PHẨM & PHÂN TRANG ==========
+// ========== SEARCH, FILTER & PAGINATION ==========
 $searchName = $_GET['name'] ?? '';
 $category   = $_GET['category'] ?? 'all';
 $priceRange = $_GET['price'] ?? '99999999';
@@ -66,7 +67,7 @@ $limit = 9;
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($page - 1) * $limit;
 
-// Lấy tổng số sản phẩm theo điều kiện lọc
+// Get total products count
 $countSql = "SELECT COUNT(*) FROM products WHERE price <= :price";
 if (!empty($searchName)) {
     $countSql .= " AND name LIKE :name";
@@ -86,7 +87,7 @@ $countStmt->execute();
 $totalProducts = $countStmt->fetchColumn();
 $totalPages = ceil($totalProducts / $limit);
 
-// Truy vấn sản phẩm theo điều kiện lọc
+// Get filtered products
 $sql = "SELECT * FROM products WHERE price <= :price";
 if (!empty($searchName)) {
     $sql .= " AND name LIKE :name";
@@ -154,11 +155,13 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <?php endif; ?>
                         <div class="login-dropdown">
                             <?php if (strtolower($currentUser['role']) === 'admin'): ?>
-                                <a href="edit.php" class="login-option">Edit</a>
+                                <a href="edit.php" class="login-option">Edit Products</a>
+                                <a href="edit_profile.php" class="login-option">Edit Profile</a>
                             <?php else: ?>
-                                <a href="order_history.php" class="login-option">Order history</a>
+                                <a href="order_history.php" class="login-option">Order History</a>
+                                <a href="edit_profile.php" class="login-option">Edit Profile</a>
                             <?php endif; ?>
-                            <a href="index.php" class="login-option">Log out</a>
+                            <a href="logout.php" class="login-option">Log out</a>
                         </div>
                     <?php else: ?>
                         <a class="login-link">
