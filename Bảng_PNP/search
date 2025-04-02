@@ -1,0 +1,29 @@
+
+Tạo bang:
+
+CREATE TABLE products (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    price DECIMAL(10,2),
+    image VARCHAR(255) NOT NULL
+);
+
+
+
+
+dữ lieu:
+
+INSERT INTO products (name, description, price, image) VALUES
+('Nendoroid Godness Aqua', 'From Konosuba', 9.99, './img/Aqua.jpg'),
+('Stellaron Hunter SAM', 'Honkai Star Rail', 15.99, './img/SAM.webp'),
+('SHFiguarts Kamen Rider Kabuto', 'Kamen Rider Kabuto', 11.99, './img/RiderKick.jpg'),
+('Cirno FUMO', 'Project Touhou', 99.99, './img/Cirno.jpg'),
+('Gotou Hitori', 'Bocchi The Rock', 99.99, './img/Bocchi.jpeg'),
+('EVA-01', 'Neon Genesis Evangelion', 99.99, './img/EVA-01.webp'),
+('Kamisato Ayaka', 'Genshin Impact', 99.99, './img/Ayaka.jpg'),
+('Neco Arc', 'Melty Blood', 99.99, './img/necoacr.jpg'),
+('Kurumi Tokisaki', 'Date A Live', 99.99, './img/Kurumi.jpg'),
+('Barbatos Lupus Rex', 'Mobile Suit Gundam: Iron-Blooded Orphans', 99.99, './img/Barbatos_lupus_rex.webp'),
+('Gundam Vidar', 'Mobile Suit Gundam: Iron-Blooded Orphans', 99.99, './img/Vidar.jpg'),
+('Nendoroid Tatsumaki', 'One Punch Man', 99.99, './img/Tatsumaki.webp');

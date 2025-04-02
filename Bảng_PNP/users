@@ -1,0 +1,24 @@
+-- Tạo bảng users với thứ tự cột theo yêu cầu
+CREATE TABLE IF NOT EXISTS `users` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `username` VARCHAR(100) NOT NULL,
+  `email` VARCHAR(255) NOT NULL,
+  `password` VARCHAR(255) NOT NULL,
+  `address` VARCHAR(255) DEFAULT NULL,
+  `phone` VARCHAR(20) DEFAULT NULL,
+  `role` ENUM('Admin','User') NOT NULL DEFAULT 'User',
+  `status` VARCHAR(20) NOT NULL DEFAULT 'Active',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- Xoá dữ liệu cũ (nếu cần)
+TRUNCATE TABLE `users`;
+
+-- Thêm dữ liệu mẫu: 1 Admin và 4 tài khoản User
+INSERT INTO `users` (`username`, `email`, `password`, `address`, `phone`, `role`, `status`, `created_at`)
+VALUES
+('Jane', 'JaneDoesMyWill@gmail.com', 'someHashedPassword', '123 Main Street', '0123456789', 'Admin', 'Active', '2025-03-21 10:00:00'),
+('Arby', 'hello123@gmail.com', 'someHashedPassword2', '456 Elm Street', '0987654321', 'User', 'Active', '2025-03-21 10:05:00'),
+('Alexandria', 'hello123@ggmail.com', 'someHashedPassword3', '789 Oak Avenue', '0112233445', 'User', 'Active', '2025-03-21 10:10:00'),
+('Abass', 'hello12@ggmail.com', 'someHashedPassword4', '321 Pine Road', '0223344556', 'User', 'Active', '2025-03-21 10:15:00'),
+('DreamyBull', 'hello12f3@gmail.com', 'someHashedPassword5', '654 Maple Blvd', '0334455667', 'User', 'Active', '2025-03-21 10:20:00');

@@ -1,0 +1,15 @@
+tạo bảng:
+CREATE TABLE `products` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `price` decimal(10,2) NOT NULL,
+  `image` varchar(255) NOT NULL,
+  `description` text NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+data:
+INSERT INTO `products` (`name`, `price`, `image`, `description`) VALUES
+('Product 1', 9.99, './img/Aqua.jpg', 'Product description goes here'),
+('Product 2', 15.99, './img/SAM.webp', 'Product description goes here'),
+('Product 3', 11.99, './img/RiderKick.jpg', 'Product description goes here');
