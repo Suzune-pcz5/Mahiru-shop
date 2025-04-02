@@ -18,9 +18,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $pass = trim($_POST['password']);
     $address = trim($_POST['address']);
     $phone = trim($_POST['phone']);
-    $role = "User"; // Mặc định là User
+    $role = "Users"; // Mặc định là Users
     $created_at = date("Y-m-d H:i:s"); // Lấy thời gian hiện tại
-    $status = "Active"; // Thêm trạng thái mặc định là Active
 
     if (!empty($user_name) && !empty($email) && !empty($pass) && !empty($address) && !empty($phone)) {
         // Kiểm tra xem có Admin nào chưa, nếu chưa có thì tạo Admin đầu tiên
@@ -53,8 +52,34 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         } else {
             // Tạo tài khoản mới
             $hashed_password = password_hash($pass, PASSWORD_BCRYPT);
-            $stmt = $conn->prepare("INSERT INTO users (username, email, password, address, phone, role, created_at, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("ssssssss", $user_name, $email, $hashed_password, $address, $phone, $role, $created_at, $status);
+
+            // Tìm id nhỏ nhất còn trống
+            $result = $conn->query("SELECT MIN(id) as next_id FROM (
+                SELECT a.id + 1 as id
+                FROM users a
+                LEFT JOIN users b ON a.id + 1 = b.id
+                WHERE b.id IS NULL AND a.id < (SELECT MAX(id) FROM users)
+                UNION
+                SELECT 1 as id
+                WHERE NOT EXISTS (SELECT id FROM users WHERE id = 1)
+            ) t WHERE t.id > 0 LIMIT 1");
+
+            $row = $result->fetch_assoc();
+            $next_id = $row['next_id'];
+
+            if ($next_id === null) {
+                // Nếu không có khoảng trống, lấy giá trị AUTO_INCREMENT tiếp theo
+                $next_id = $conn->query("SHOW TABLE STATUS LIKE 'users'")->fetch_assoc()['Auto_increment'];
+            }
+
+            // Kiểm tra xem id đã tồn tại chưa, nếu có thì tăng lên 1
+            while ($conn->query("SELECT id FROM users WHERE id = $next_id")->num_rows > 0) {
+                $next_id++;
+            }
+
+            // Chèn bản ghi với id được gán thủ công
+            $stmt = $conn->prepare("INSERT INTO users (id, username, email, password, address, phone, role, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("isssssss", $next_id, $user_name, $email, $hashed_password, $address, $phone, $role, $created_at);
 
             if ($stmt->execute()) {
                 // Đăng ký thành công -> Đăng nhập ngay
@@ -70,7 +95,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                       </script>";
                 exit();
             } else {
-                $message = "Registration failed. Please try again!";
+                $message = "Registration failed. Please try again! Error: " . $conn->error;
             }
         }
     } else {
@@ -80,8 +105,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 $conn->close();
 ?>
-
-<!-- Phần HTML giữ nguyên, không thay đổi -->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -139,7 +162,7 @@ $conn->close();
 
         <footer>
             <div class="container">
-                <p>&copy; Mahiru Shop. We are pleased to serve you.</p>
+                <p>© Mahiru Shop. We are pleased to serve you.</p>
             </div>
         </footer>
     </div>
