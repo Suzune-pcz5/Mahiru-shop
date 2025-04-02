@@ -68,32 +68,35 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <span><i class="fas fa-map-marker-alt"></i> 1104 Wall Street</span>
                 </div>
                 <div class="user-actions">
-                    <?php if ($currentUser): ?>
-                        <i class="fas fa-user"></i>
-                        <?php if (strtolower($currentUser['role']) === 'admin'): ?>
-                            <span class="name">ADMIN</span>
-                        <?php else: ?>
-                            <span class="name"><?php echo htmlspecialchars($currentUser['username']); ?></span>
-                        <?php endif; ?>
-                        <div class="login-dropdown">
-                            <?php if (strtolower($currentUser['role']) === 'admin'): ?>
-                                <a href="edit.php" class="login-option">Edit</a>
-                            <?php else: ?>
-                                <a href="order_history.php" class="login-option">Order history</a>
-                            <?php endif; ?>
-                            <a href="index.php" class="login-option">Log out</a>
-                        </div>
-                    <?php else: ?>
-                        <a class="login-link">
-                            <i class="fas fa-user"></i>
-                            <span class="name">Login/Sign up</span>
-                        </a>
-                        <div class="login-dropdown">
-                            <a href="login.php" class="login-option">Login</a>
-                            <a href="sign_up.php" class="login-option">Sign up</a>
-                        </div>
-                    <?php endif; ?>
-                </div>
+    <?php if ($currentUser): ?>
+        <i class="fas fa-user"></i>
+        <?php if (strtolower($currentUser['role']) === 'admin'): ?>
+            <span class="name">ADMIN</span>
+        <?php else: ?>
+            <span class="name"><?php echo htmlspecialchars($currentUser['username']); ?></span>
+        <?php endif; ?>
+        <div class="login-dropdown">
+            <?php if (strtolower($currentUser['role']) === 'admin'): ?>
+                <a href="edit.php" class="login-option">Admin Panel</a>
+                <a href="order_history.php" class="login-option">Order History</a>
+                <a href="edit_profile.php" class="login-option">Edit Profile</a>
+            <?php else: ?>
+                <a href="order_history.php" class="login-option">Order History</a>
+                <a href="edit_profile.php" class="login-option">Edit Profile</a>
+            <?php endif; ?>
+            <a href="logout.php" class="login-option">Log out</a>
+        </div>
+    <?php else: ?>
+        <a class="login-link">
+            <i class="fas fa-user"></i>
+            <span class="name">Login/Sign up</span>
+        </a>
+        <div class="login-dropdown">
+            <a href="login.php" class="login-option">Login</a>
+            <a href="sign_up.php" class="login-option">Sign up</a>
+        </div>
+    <?php endif; ?>
+</div>
             </div>
         </div>
         <div class="main-header">
