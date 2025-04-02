@@ -1,0 +1,254 @@
+/* Order Details Container Styles */
+.order-details-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-top: 20px;
+}
+
+/* Breadcrumb Styles */
+.breadcrumb {
+    margin-bottom: 20px;
+    color: #666;
+}
+
+.breadcrumb a {
+    color: #d10024;
+    text-decoration: none;
+}
+
+.breadcrumb a:hover {
+    text-decoration: underline;
+}
+
+/* Order Header Styles */
+.order-header {
+    margin-bottom: 30px;
+}
+
+.order-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.order-title h1 {
+    font-size: 24px;
+    color: #2b2d42;
+}
+
+.order-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.invoice-btn,
+.track-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.invoice-btn {
+    background-color: #f8f8f8;
+    color: #2b2d42;
+}
+
+.track-btn {
+    background-color: #d10024;
+    color: #fff;
+}
+
+.invoice-btn:hover {
+    background-color: #eee;
+}
+
+.track-btn:hover {
+    background-color: #ff1a3e;
+}
+
+.order-info {
+    color: #666;
+    line-height: 1.6;
+}
+
+/* Order Items Styles */
+.order-items {
+    margin-bottom: 30px;
+}
+
+.order-items h2 {
+    font-size: 20px;
+    color: #2b2d42;
+    margin-bottom: 15px;
+}
+
+.order-items-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px; /* Update: Added margin-top */
+}
+
+.order-items-table th,
+.order-items-table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.order-items-table th {
+    background-color: #f8f8f8;
+    font-weight: bold;
+    color: #2b2d42;
+}
+
+.item-image {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 5px;
+    margin-right: 15px;
+}
+
+.item-details {
+    display: inline-block;
+    vertical-align: top;
+}
+
+.item-details h3 {
+    margin: 0 0 5px;
+    font-size: 16px;
+    color: #2b2d42;
+}
+
+.item-details p {
+    margin: 0;
+    color: #666;
+}
+
+/* Order Summary Styles */
+.order-summary {
+    background-color: #f8f8f8;
+    padding: 20px;
+    border-radius: 5px;
+    margin-bottom: 30px;
+}
+
+.order-summary h2 {
+    font-size: 20px;
+    color: #2b2d42;
+    margin-bottom: 15px;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: #2b2d42;
+}
+
+.summary-row.total {
+    font-weight: bold;
+    font-size: 16px;
+    border-top: 1px solid #ddd;
+    padding-top: 10px;
+    margin-top: 10px;
+}
+
+/* Shipping and Payment Info Styles */
+.shipping-payment-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+.shipping-info,
+.payment-info {
+    background-color: #f8f8f8;
+    padding: 20px;
+    border-radius: 5px;
+}
+
+.shipping-info h2,
+.payment-info h2 {
+    font-size: 20px;
+    color: #2b2d42;
+    margin-bottom: 15px;
+}
+
+.shipping-info p,
+.payment-info p {
+    margin-bottom: 5px;
+    color: #666;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .order-title {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .shipping-payment-info {
+        grid-template-columns: 1fr;
+    }
+
+    .order-items-table,
+    .order-items-table thead,
+    .order-items-table tbody,
+    .order-items-table th,
+    .order-items-table td,
+    .order-items-table tr {
+        display: block;
+    }
+
+    .order-items-table thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+
+    .order-items-table tr {
+        border: 1px solid #ccc;
+        margin-bottom: 10px;
+    }
+
+    .order-items-table td {
+        border: none;
+        border-bottom: 1px solid #eee;
+        position: relative;
+        padding-left: 50%;
+    }
+
+    .order-items-table td:before {
+        position: absolute;
+        top: 6px;
+        left: 6px;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap;
+        content: attr(data-label);
+        font-weight: bold;
+    }
+
+    .order-actions {
+        width: 100%;
+    }
+
+    .invoice-btn,
+    .track-btn {
+        flex: 1;
+        justify-content: center;
+    }
+}

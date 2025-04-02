@@ -1,1 +1,323 @@
+/* Cart Container Styles */
+.cart-container {
+    width: 100%; /* Chiều rộng 100% để fit với container */
+    max-width: 1000px; /* Giữ giới hạn tối đa */
+    margin: 0 auto;
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-top: 20px;
+}
 
+.page-title {
+    font-size: 24px;
+    color: #2b2d42;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* Cart Table Styles */
+.cart-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.cart-table th,
+.cart-table td {
+    padding: 15px;
+    text-align: center; /* Căn giữa tất cả cột */
+    border-bottom: 1px solid #e1e1e1;
+}
+
+.cart-table th {
+    background-color: #f8f8f8;
+    font-weight: bold;
+    color: #2b2d42;
+}
+
+/* Điều chỉnh chiều rộng của các cột */
+.cart-table th:nth-child(1),
+.cart-table td:nth-child(1) {
+    width: 50% !important; /* Cột Product chiếm 50% */
+}
+
+.cart-table th:nth-child(2),
+.cart-table td:nth-child(2) {
+    width: 15% !important; /* Cột Price chiếm 15% */
+}
+
+.cart-table th:nth-child(3),
+.cart-table td:nth-child(3) {
+    width: 10% !important; /* Cột Quantity chiếm 10% */
+}
+
+.cart-table th:nth-child(4),
+.cart-table td:nth-child(4) {
+    width: 15% !important; /* Cột Total chiếm 15% */
+}
+
+.cart-table th:nth-child(5),
+.cart-table td:nth-child(5) {
+    width: 10% !important; /* Cột Action chiếm 10% */
+}
+
+.cart-item {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* Khoảng cách giữa ảnh và nội dung */
+    justify-content: flex-start; /* Căn trái để thông tin sản phẩm trông tự nhiên hơn */
+    max-width: 100%; /* Đảm bảo không tràn ra ngoài cột */
+}
+
+.cart-item-image {
+    width: 60px; /* Kích thước ảnh */
+    height: 60px;
+    object-fit: cover;
+    border-radius: 5px;
+    flex-shrink: 0; /* Đảm bảo hình ảnh không bị co lại */
+}
+
+.product-info {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: 200px !important; /* Tăng chiều rộng tối đa của product-info */
+    overflow: hidden; /* Ẩn nội dung tràn */
+}
+
+.product-info h3 {
+    font-size: 14px;
+    margin: 0;
+    white-space: normal !important; /* Cho phép xuống dòng */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Giới hạn 2 dòng */
+    -webkit-box-orient: vertical;
+}
+
+.product-info p {
+    font-size: 14px; /* Tăng kích thước chữ để giống index_account.php */
+    color: #333; /* Đổi màu chữ để giống index_account.php */
+    margin: 5px 0 0 0; /* Thêm margin-top để tách biệt với tên sản phẩm */
+    white-space: normal; /* Cho phép xuống dòng tự nhiên */
+    line-height: 1.4; /* Tăng khoảng cách dòng để dễ đọc */
+}
+
+.price {
+    font-size: 14px;
+    color: #2b2d42;
+}
+
+.quantity-input {
+    width: 40px;
+    text-align: center;
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+/* Quantity Control Styles */
+.quantity-control {
+    display: flex;
+    align-items: center;
+    gap: 3px; /* Giảm khoảng cách giữa các phần tử */
+    justify-content: center; /* Căn giữa các phần tử trong quantity-control */
+}
+
+.quantity-control button {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 3px 6px; /* Giảm padding để nút nhỏ hơn */
+    font-size: 12px; /* Giảm kích thước font */
+    line-height: 1; /* Đảm bảo chiều cao dòng phù hợp */
+    cursor: pointer;
+    border-radius: 3px;
+    width: 20px; /* Đặt chiều rộng cố định */
+    height: 20px; /* Đặt chiều cao cố định */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quantity-control button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.quantity-control input {
+    width: 30px; /* Giảm chiều rộng của input */
+    height: 20px; /* Đặt chiều cao phù hợp với nút */
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    padding: 0; /* Xóa padding để input nhỏ gọn hơn */
+    font-size: 12px; /* Giảm kích thước font */
+    line-height: 20px; /* Đảm bảo căn giữa theo chiều dọc */
+}
+
+.subtotal {
+    font-size: 14px;
+    color: #2b2d42;
+}
+
+/* Button Styles */
+.remove-btn,
+.update-cart-btn,
+.checkout-btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.remove-btn {
+    padding: 5px 10px;
+    font-size: 12px;
+    background-color: #ff4136;
+    color: #fff;
+}
+
+.remove-btn:hover {
+    background-color: #ff1a1a;
+}
+
+.update-cart-btn {
+    background-color: #ff1a1a;
+    color: #fff;
+    margin-top: 20px;
+}
+
+.update-cart-btn:hover {
+    background-color: #ff1a3e;
+}
+
+.checkout-btn {
+    display: block;
+    width: 100%;
+    background-color: #d10024;
+    color: #fff;
+    text-align: center;
+    font-size: 16px;
+    margin-top: 20px;
+    text-decoration: none;
+}
+
+.checkout-btn:hover {
+    background-color: #ff1a3e;
+}
+
+/* Cart Summary Styles */
+.cart-summary {
+    background-color: #f8f8f8;
+    padding: 20px;
+    border-radius: 5px;
+    margin-top: 20px;
+}
+
+.cart-summary h2 {
+    font-size: 18px;
+    color: #2b2d42;
+    margin-bottom: 15px;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: #2b2d42;
+}
+
+.summary-row.total {
+    font-weight: bold;
+    font-size: 16px;
+    border-top: 1px solid #e1e1e1;
+    padding-top: 10px;
+    margin-top: 10px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .cart-table,
+    .cart-table thead,
+    .cart-table tbody,
+    .cart-table th,
+    .cart-table td,
+    .cart-table tr {
+        display: block;
+    }
+
+    .cart-table thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+
+    .cart-table tr {
+        border: 1px solid #ccc;
+        margin-bottom: 10px;
+    }
+
+    .cart-table td {
+        border: none;
+        border-bottom: 1px solid #eee;
+        position: relative;
+        padding-left: 50%;
+        text-align: left; /* Căn trái trên màn hình nhỏ */
+    }
+
+    .cart-table td:before {
+        position: absolute;
+        top: 6px;
+        left: 6px;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap;
+        content: attr(data-label);
+        font-weight: bold;
+    }
+
+    .cart-table td:nth-of-type(1):before { content: "Product"; }
+    .cart-table td:nth-of-type(2):before { content: "Price"; }
+    .cart-table td:nth-of-type(3):before { content: "Quantity"; }
+    .cart-table td:nth-of-type(4):before { content: "Total"; }
+    .cart-table td:nth-of-type(5):before { content: "Action"; }
+
+    .product-info {
+        max-width: 100% !important; /* Xóa giới hạn chiều rộng trên màn hình nhỏ */
+    }
+
+    .cart-item {
+        justify-content: flex-start; /* Căn trái trên màn hình nhỏ */
+    }
+
+    /* Điều chỉnh quantity-control trên màn hình nhỏ */
+    .quantity-control {
+        gap: 2px; /* Giảm khoảng cách trên màn hình nhỏ */
+    }
+
+    .quantity-control button {
+        width: 18px; /* Giảm kích thước nút trên màn hình nhỏ */
+        height: 18px;
+        font-size: 10px;
+        padding: 2px 4px;
+    }
+
+    .quantity-control input {
+        width: 28px; /* Giảm chiều rộng input trên màn hình nhỏ */
+        height: 18px;
+        font-size: 10px;
+        line-height: 18px;
+    }
+
+    /* Điều chỉnh product-info trên màn hình nhỏ */
+    .product-info p {
+        font-size: 12px; /* Giảm kích thước chữ trên màn hình nhỏ */
+    }
+}   

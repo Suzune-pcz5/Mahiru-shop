@@ -1,0 +1,237 @@
+/* Checkout Form Styles */
+.checkout-form {
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-top: 20px;
+    max-width: 1000px; /* Đồng bộ với cart.php */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.page-title {
+    font-size: 24px;
+    color: #2b2d42;
+    margin-bottom: 20px;
+    text-align: center; /* Đồng bộ với cart.php */
+}
+
+/* Checkout Container Styles */
+.checkout-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px; /* Thêm khoảng cách giữa các phần */
+    margin-bottom: 30px;
+}
+
+/* Shipping Information and Payment Method Styles */
+.shipping-info,
+.payment-info {
+    width: 48%;
+    background-color: #f8f8f8; /* Đồng bộ với cart.php */
+    padding: 20px;
+    border-radius: 5px;
+}
+
+.shipping-info h2,
+.payment-info h2 {
+    font-size: 18px;
+    color: #2b2d42;
+    margin-bottom: 15px;
+}
+
+.address-selection,
+.new-address-form,
+.payment-options,
+.credit-card-form {
+    margin-bottom: 20px;
+}
+
+.address-selection h3,
+.new-address-form h3,
+.credit-card-form h3 {
+    font-size: 16px;
+    color: #2b2d42;
+    margin-bottom: 10px;
+}
+
+select,
+input[type="text"],
+input[type="tel"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px; /* Đồng bộ với cart.php */
+}
+
+/* Payment Method Styles */
+.payment-options label {
+    display: flex; /* Cải thiện bố cục */
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: #2b2d42;
+}
+
+.card-details {
+    display: flex;
+    justify-content: space-between;
+}
+
+.card-details input {
+    width: 48%;
+}
+
+/* Order Summary Styles */
+.order-summary {
+    background-color: #f8f8f8;
+    padding: 20px;
+    border-radius: 5px;
+}
+
+.order-summary h2 {
+    font-size: 18px;
+    color: #2b2d42;
+    margin-bottom: 15px;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.cart-item {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* Đồng bộ với cart.php */
+    max-width: 70%;
+}
+
+.cart-item-image {
+    width: 60px; /* Đồng bộ với cart.php */
+    height: 60px;
+    object-fit: cover;
+    border-radius: 5px;
+    flex-shrink: 0;
+}
+
+.product-info {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: 200px; /* Đồng bộ với cart.php */
+    overflow: hidden;
+}
+
+.product-info h3 {
+    font-size: 14px;
+    margin: 0;
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.product-info p {
+    font-size: 12px;
+    color: #777;
+    margin: 0;
+}
+
+.subtotal {
+    font-size: 14px;
+    color: #2b2d42;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: #2b2d42;
+}
+
+.summary-row.total {
+    font-weight: bold;
+    font-size: 16px;
+    border-top: 1px solid #e1e1e1;
+    padding-top: 10px;
+    margin-top: 10px;
+}
+
+/* Checkout Actions Styles */
+.checkout-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.back-to-cart-btn,
+.place-order-btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    text-decoration: none;
+    font-size: 16px;
+}
+
+.back-to-cart-btn {
+    background-color: #777;
+    color: #fff;
+}
+
+.back-to-cart-btn:hover {
+    background-color: #555;
+}
+
+.place-order-btn {
+    background-color: #d10024;
+    color: #fff;
+}
+
+.place-order-btn:hover {
+    background-color: #ff1a3e;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .checkout-container {
+        flex-direction: column;
+    }
+
+    .shipping-info,
+    .payment-info {
+        width: 100%;
+        margin-bottom: 30px;
+    }
+
+    .cart-item {
+        max-width: 100%;
+    }
+
+    .product-info {
+        max-width: 100%;
+    }
+
+    .checkout-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .back-to-cart-btn,
+    .place-order-btn {
+        width: 100%;
+        text-align: center;
+    }
+}
