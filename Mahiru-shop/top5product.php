@@ -1,34 +1,26 @@
 <?php
-session_start();
-
-
-// Kết nối cơ sở dữ liệu
-$servername = "localhost";
-$username   = "root";
-$password   = "";
-$dbname     = "mahiru_shop";
+// Kết nối database
+$host = 'localhost';
+$dbname = 'mahiru_shop';
+$dbUsername = 'root';
+$dbPassword = '';
 
 try {
-    $conn = new PDO("mysql:host=$servername;dbname=$dbname;charset=utf8", $username, $password);
+    $conn = new PDO("mysql:host=$host;dbname=$dbname", $dbUsername, $dbPassword);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (PDOException $e) {
-    echo "Kết nối CSDL thất bại: " . $e->getMessage();
-    exit();
+    die("Connection failed: " . $e->getMessage());
 }
 
-// Truy vấn top 5 khách hàng dựa trên tổng doanh thu
-$stmt = $conn->prepare("
-    SELECT u.id, u.username, SUM(o.total_price) as total_revenue
-    FROM users u
-    JOIN orders o ON u.id = o.user_id
-    GROUP BY u.id, u.username
-    ORDER BY total_revenue DESC 
-    LIMIT 5
-");
+// Truy vấn top 5 sản phẩm bán chạy nhất
+$sql = "SELECT id, name, sold_count, price, (sold_count * price) AS revenue 
+        FROM products 
+        ORDER BY sold_count DESC 
+        LIMIT 5";
+$stmt = $conn->prepare($sql);
 $stmt->execute();
-$topCustomers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$topProducts = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -75,35 +67,36 @@ $topCustomers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </ul>
             </div>
             <section class="admin-content">
-                <h3>Top 5 Customers</h3>
+                <h3>Top 5 product</h3>
                 <table class="table-wrapper">
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>Customer</th>
+                            <th>product</th>
+                            <th>total</th>
                             <th>Revenue</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php if (!empty($topCustomers)): ?>
-                            <?php $rank = 1; ?>
-                            <?php foreach ($topCustomers as $customer): ?>
-                                <tr>
-                                    <td><?php echo $rank++; ?></td>
-                                    <td><?php echo htmlspecialchars($customer['username']); ?></td>
-                                    <td>$<?php echo number_format($customer['total_revenue'], 2); ?></td>
-                                    <td>
-                                        <a href="./customer-invoices.php?user_id=<?php echo $customer['id']; ?>" class="btn">View Invoices</a>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <tr>
-                                <td colspan="4">No customers found.</td>
-                            </tr>
-                        <?php endif; ?>
-                    </tbody>
+    <?php if (!empty($topProducts)): ?>
+        <?php foreach ($topProducts as $index => $product): ?>
+            <tr>
+                <td><?php echo $index + 1; ?></td>
+                <td><?php echo htmlspecialchars($product['name']); ?></td>
+                <td><?php echo $product['sold_count']; ?></td>
+                <td>$<?php echo number_format($product['revenue'], 2); ?></td>
+                <td>
+                    <a href="related-invoice.php?product_id=<?php echo $product['id']; ?>"class="btn">View</a>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+    <?php else: ?>
+        <tr>
+            <td colspan="5">No products found.</td>
+        </tr>
+    <?php endif; ?>
+</tbody>
                 </table>
             </section>
         </div>

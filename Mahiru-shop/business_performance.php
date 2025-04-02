@@ -147,6 +147,7 @@ $leastProduct = $stmtLeast->fetch(PDO::FETCH_ASSOC);
                 <ul>
                     <li><a href="./business_performance.php" class="active">Product Statistics</a></li>
                     <li><a href="./top5customer.php">Top 5 Customer</a></li>
+                    <li><a href="./top5product.php"class="active"> Top 5 Product</a></li>
                 </ul>
             </div>
             <section class="admin-content">
@@ -222,13 +223,7 @@ $leastProduct = $stmtLeast->fetch(PDO::FETCH_ASSOC);
                             <td><?php echo number_format($revenue, 2); ?>$</td>
                             <td>
                                 <!-- Truyền product_id qua URL -->
-                                <a 
-                                    href="./related-invoice.php?product_id=<?php echo $prod['id']; ?>" 
-                                    class="btn" 
-                                    style="background-color: green; border-color: green; color: white"
-                                >
-                                    View
-                                </a>
+
                             </td>
                         </tr>
                         <?php endforeach; ?>
