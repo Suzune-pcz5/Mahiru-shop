@@ -121,12 +121,12 @@ $conn->close();
                                     <label for="product-category">Category</label>
                                     <select id="product-category" name="product-category" required>
                                         <option value="">Select a category</option>
-                                        <option value="gundam">Gundam Models</option>
-                                        <option value="kamen rider">Kamen Rider</option>
-                                        <option value="standee">Standee</option>
-                                        <option value="keychain">Keychain</option>
-                                        <option value="plush">Plush</option>
-                                        <option value="figure">Figure</option>
+                                        <option value="Gundam">Gundam Models</option>
+                                        <option value="Kamen Rider">Kamen Rider</option>
+                                        <option value="Standee">Standee</option>
+                                        <option value="Keychain">Keychain</option>
+                                        <option value="Plush">Plush</option>
+                                        <option value="Figure">Figure</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
