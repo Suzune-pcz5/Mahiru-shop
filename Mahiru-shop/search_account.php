@@ -98,7 +98,7 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <div class="contact-info">
                     <span><i class="fas fa-phone"></i> 012345678</span>
                     <span><i class="fas fa-envelope"></i> mahiru@gmail.com</span>
-                    <span><i class="fas fa-map-marker-alt"></i>1104 Wall Street</span>
+                    <span><i class="fas fa-map-marker-alt"></i> 1104 Wall Street</span>
                 </div>
                 <div class="user-actions">
                     <?php if ($currentUser): ?>
@@ -133,7 +133,7 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <div class="main-header">
             <div class="container">
                 <div class="logo">
-                    <a href="search_account.php" class="logo-link"><h1>MAHIRU<span>.</span></h1></a>
+                    <a href="index_account.php" class="logo-link"><h1>MAHIRU<span>.</span></h1></a>
                 </div>
                 <div class="search-bar">
                     <form action="search_account.php" method="GET">
@@ -148,9 +148,9 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
             </div>
         </div>
-        <nav>
+        <nav class="category-nav">
             <div class="container">
-            <ul class="category-list">
+                <ul class="category-list">
                     <li><a href="index_account.php">Home</a></li>
                     <?php foreach ($categories as $cat): ?>
                         <li><a href="index_account.php?category=<?= urlencode($cat['category']) ?>"> <?= htmlspecialchars($cat['category']) ?> </a></li>
@@ -219,13 +219,13 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <div class="product-row">
                             <?php foreach ($productRow as $product) : ?>
                                 <div class="product-card">
-                                    <a href="product_details.php?id=<?php echo $product['id']; ?>" class="product-image">
+                                    <a href="product_details_acc.php?id=<?php echo $product['id']; ?>" class="product-image">
                                         <img src="<?php echo htmlspecialchars($product['image']); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>" />
                                     </a>
                                     <h3><?php echo htmlspecialchars($product['name']); ?></h3>
                                     <p><?php echo htmlspecialchars($product['description']); ?></p>
                                     <span class="price">$<?php echo htmlspecialchars($product['price']); ?></span>
-                                    <a href="product_details.php?id=<?php echo $product['id']; ?>" class="btn">Add to Cart</a>
+                                    <a href="product_details_acc.php?id=<?php echo $product['id']; ?>" class="btn">Add to Cart</a>
                                 </div>
                             <?php endforeach; ?>
                         </div>
@@ -249,7 +249,7 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </main>
     <footer>
         <div class="container">
-            <p>&copy; Mahiru Shop. We are pleased to serve you.</p>
+            <p>© Mahiru Shop. We are pleased to serve you.</p>
         </div>
     </footer>
     <script src="./js/popup.js"></script>
