@@ -23,6 +23,47 @@ if (isset($_SESSION['user_name']) && isset($_SESSION['user_role'])) {
     ];
 }
 
+// ========== XỬ LÝ THÊM SẢN PHẨM VÀO GIỎ HÀNG ==========
+if (isset($_GET['add_to_cart']) && isset($_SESSION['user_id'])) {
+    $productId = (int)$_GET['add_to_cart'];
+    $userId = $_SESSION['user_id'];
+
+    // Kiểm tra xem sản phẩm đã có trong giỏ hàng chưa
+    $checkStmt = $conn->prepare("SELECT * FROM cart WHERE user_id = :user_id AND product_id = :product_id");
+    $checkStmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
+    $checkStmt->bindValue(':product_id', $productId, PDO::PARAM_INT);
+    $checkStmt->execute();
+    $existingItem = $checkStmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($existingItem) {
+        // Nếu sản phẩm đã có, tăng số lượng
+        $newQuantity = $existingItem['quantity'] + 1;
+        $updateStmt = $conn->prepare("UPDATE cart SET quantity = :quantity WHERE user_id = :user_id AND product_id = :product_id");
+        $updateStmt->bindValue(':quantity', $newQuantity, PDO::PARAM_INT);
+        $updateStmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
+        $updateStmt->bindValue(':product_id', $productId, PDO::PARAM_INT);
+        $updateStmt->execute();
+    } else {
+        // Nếu sản phẩm chưa có, thêm mới
+        $insertStmt = $conn->prepare("INSERT INTO cart (user_id, product_id, quantity) VALUES (:user_id, :product_id, 1)");
+        $insertStmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
+        $insertStmt->bindValue(':product_id', $productId, PDO::PARAM_INT);
+        $insertStmt->execute();
+    }
+
+    $_SESSION['success_message'] = "Product added to cart successfully!";
+    // Chuyển hướng về search_account.php, giữ các tham số tìm kiếm hiện tại
+    $redirectParams = [
+        'name' => urlencode($_GET['name'] ?? ''),
+        'category' => urlencode($_GET['category'] ?? 'all'),
+        'price' => $_GET['price'] ?? 300,
+        'sort' => $_GET['sort'] ?? 'relevance',
+        'page' => $_GET['page'] ?? 1
+    ];
+    header("Location: search_account.php?" . http_build_query($redirectParams));
+    exit;
+}
+
 // ========== LẤY DANH MỤC TỪ BẢNG products ==========
 $categoryQuery = $conn->query("SELECT DISTINCT category FROM products");
 $categories = $categoryQuery->fetchAll(PDO::FETCH_ASSOC);
@@ -126,6 +167,22 @@ function buildSortUrl($sortOption, $searchName, $category, $priceRange, $page) {
     <title>Mahiru Shop</title>
     <link rel="stylesheet" href="./css/search.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+    <style>
+        .success-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 1000;
+            display: none;
+        }
+        .success-message.show {
+            display: block;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -225,6 +282,10 @@ function buildSortUrl($sortOption, $searchName, $category, $priceRange, $page) {
                             <input type="range" id="priceRange" name="price" min="0" max="300" value="<?php echo $priceRange; ?>" class="filter-input" />
                             <div class="range-label">300</div>
                         </div>
+                        <!-- Thêm phần hiển thị giá trị hiện tại -->
+                        <div class="price-value" style="margin-top: 5px;">
+                            Current Price: $<span id="priceOutput"><?php echo htmlspecialchars($priceRange); ?></span>
+                        </div>
                     </div>
 
                     <button type="submit" class="filter-button">Search</button>
@@ -261,7 +322,7 @@ function buildSortUrl($sortOption, $searchName, $category, $priceRange, $page) {
                                     <h3><?php echo htmlspecialchars($product['name']); ?></h3>
                                     <p><?php echo htmlspecialchars($product['description']); ?></p>
                                     <span class="price">$<?php echo htmlspecialchars($product['price']); ?></span>
-                                    <a href="product_details_acc.php?id=<?php echo $product['id']; ?>" class="btn">Add to Cart</a>
+                                    <a href="search_account.php?add_to_cart=<?php echo $product['id']; ?>&name=<?php echo urlencode($searchName); ?>&category=<?php echo urlencode($category); ?>&price=<?php echo $priceRange; ?>&sort=<?php echo $sort; ?>&page=<?php echo $page; ?>" class="btn">Add to Cart</a>
                                 </div>
                             <?php endforeach; ?>
                         </div>
@@ -288,6 +349,31 @@ function buildSortUrl($sortOption, $searchName, $category, $priceRange, $page) {
             <p>© Mahiru Shop. We are pleased to serve you.</p>
         </div>
     </footer>
+
+    <?php if (isset($_SESSION['success_message'])): ?>
+        <div class="success-message" id="successPopup"><?php echo htmlspecialchars($_SESSION['success_message']); ?></div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var popup = document.getElementById('successPopup');
+                popup.classList.add('show');
+                setTimeout(function() {
+                    popup.classList.remove('show');
+                    <?php unset($_SESSION['success_message']); ?>
+                }, 3000);
+            });
+        </script>
+    <?php endif; ?>
+
+    <!-- Thêm JavaScript để cập nhật giá trị thanh trượt -->
+    <script>
+        const priceRange = document.getElementById('priceRange');
+        const priceOutput = document.getElementById('priceOutput');
+        priceOutput.textContent = priceRange.value;
+        priceRange.addEventListener('input', function() {
+            priceOutput.textContent = priceRange.value;
+        });
+    </script>
+
     <script src="./js/popup.js"></script>
 </body>
 </html>
