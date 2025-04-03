@@ -114,6 +114,7 @@ unset($_SESSION['order_id']);
                     <span class="name"><?php echo htmlspecialchars($_SESSION['user_name']); ?></span>
                     <div class="login-dropdown">
                         <a href="order_history.php" class="login-option">Order History</a>
+                        <a href="edit_profile.php" class="login-option">Edit Profile</a>
                         <a href="index.php" class="login-option">Log out</a>
                     </div>
                 </div>
