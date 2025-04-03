@@ -157,13 +157,19 @@ if (isset($_GET['add_to_cart']) && isset($_SESSION['user_id'])) {
                     <a href="index_account.php" class="logo-link"><h1>MAHIRU<span>.</span></h1></a>
                 </div>
                 <div class="search-bar">
-                    <form action="search_account.php" method="GET">
-                        <input type="text" name="name" placeholder="Search here" value="<?php echo htmlspecialchars($searchName); ?>" />
-                        <input type="hidden" name="category" value="<?php echo htmlspecialchars($category); ?>" />
-                        <input type="hidden" name="price" value="<?php echo htmlspecialchars($priceRange); ?>" />
-                        <button type="submit" class="search-button">Search</button>
-                    </form>
+                <input type="text" id="searchInput" placeholder="Search here" value="<?php echo htmlspecialchars($searchName); ?>" />
+                <button class="search-button" onclick="performSearch()">Search</button>
                 </div>
+                <script>
+                    function performSearch() {
+                 let searchValue = document.getElementById("searchInput").value.trim();
+                if (searchValue) {
+                window.location.href = "search_account.php?name=" + encodeURIComponent(searchValue);
+    }
+}
+
+                </script>
+
                 <div class="user-menu">
                     <a href="cart.php" class="icon"><i class="fas fa-shopping-cart"></i></a>
                 </div>
@@ -192,13 +198,6 @@ if (isset($_GET['add_to_cart']) && isset($_SESSION['user_id'])) {
                         <h1><?php echo htmlspecialchars($product['name']); ?></h1>
                         <p class="category">Category: <?php echo htmlspecialchars($product['category']); ?></p>
                         <p class="price">$<?php echo number_format($product['price'], 2); ?></p>
-                        <div class="rating">
-                            <span class="star">★</span>
-                            <span class="star">★</span>
-                            <span class="star">★</span>
-                            <span class="star">★</span>
-                            <span class="star-empty">☆</span>
-                        </div>
                         <p class="description"><?php echo htmlspecialchars($product['description'] ?? 'No description available'); ?></p>
                         <div class="quantity-selector">
                             <button class="quantity-btn minus">-</button>
