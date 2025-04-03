@@ -27,10 +27,11 @@ if (isset($_SESSION['user_name']) && isset($_SESSION['user_role'])) {
 $categoryQuery = $conn->query("SELECT DISTINCT category FROM products");
 $categories = $categoryQuery->fetchAll(PDO::FETCH_ASSOC);
 
-// Xử lý tìm kiếm và lọc
+// Xử lý tìm kiếm, lọc và sắp xếp
 $searchName = isset($_GET['name']) ? $_GET['name'] : '';
 $category = isset($_GET['category']) ? $_GET['category'] : 'all';
 $priceRange = isset($_GET['price']) ? $_GET['price'] : 300;
+$sort = isset($_GET['sort']) ? $_GET['sort'] : 'relevance'; // Mặc định là relevance
 
 // Phân trang
 $limit = 9; // Số sản phẩm trên mỗi trang
@@ -57,7 +58,7 @@ $countStmt->execute();
 $totalProducts = $countStmt->fetchColumn();
 $totalPages = ceil($totalProducts / $limit); // Tính tổng số trang
 
-// Xây dựng câu truy vấn SQL với phân trang
+// Xây dựng câu truy vấn SQL với điều kiện lọc
 $sql = "SELECT * FROM products WHERE price <= :price";
 if (!empty($searchName)) {
     $sql .= " AND name LIKE :name";
@@ -65,7 +66,30 @@ if (!empty($searchName)) {
 if ($category != 'all') {
     $sql .= " AND category = :category";
 }
-$sql .= " LIMIT :limit OFFSET :offset"; // Thêm LIMIT và OFFSET
+
+// Thêm ORDER BY để sắp xếp trên toàn bộ kết quả
+switch ($sort) {
+    case 'newest':
+        $sql .= " ORDER BY created_at DESC";
+        break;
+    case 'best_selling':
+        $sql .= " ORDER BY sold_count DESC";
+        break;
+    case 'low_to_high':
+        $sql .= " ORDER BY price ASC";
+        break;
+    case 'high_to_low':
+        $sql .= " ORDER BY price DESC";
+        break;
+    case 'relevance':
+    default:
+        // Mặc định không sắp xếp hoặc sắp xếp theo tên (có thể tùy chỉnh)
+        $sql .= " ORDER BY name ASC";
+        break;
+}
+
+// Thêm LIMIT và OFFSET để phân trang sau khi sắp xếp
+$sql .= " LIMIT :limit OFFSET :offset";
 
 // Chuẩn bị và thực thi truy vấn
 $stmt = $conn->prepare($sql);
@@ -80,6 +104,18 @@ $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
 $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 $stmt->execute();
 $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Hàm tạo URL giữ các tham số hiện tại
+function buildSortUrl($sortOption, $searchName, $category, $priceRange, $page) {
+    $params = [
+        'sort' => $sortOption,
+        'name' => urlencode($searchName),
+        'category' => urlencode($category),
+        'price' => $priceRange,
+        'page' => $page
+    ];
+    return 'search_account.php?' . http_build_query($params);
+}
 ?>
 
 <!DOCTYPE html>
@@ -199,15 +235,15 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <section class="product-grid">
                 <div class="filter-box">
                     <span class="sort-label">Sort by:</span>
-                    <a class="sort-label" href="search_account.php"><button class="filter-btn">Relevance</button></a>
-                    <a class="sort-label" href="search_account.php"><button class="filter-btn">Newest</button></a>
-                    <a class="sort-label" href="search_account.php"><button class="filter-btn">Best Selling</button></a>
+                    <a class="sort-label" href="<?php echo buildSortUrl('relevance', $searchName, $category, $priceRange, $page); ?>"><button class="filter-btn">Relevance</button></a>
+                    <a class="sort-label" href="<?php echo buildSortUrl('newest', $searchName, $category, $priceRange, $page); ?>"><button class="filter-btn">Newest</button></a>
+                    <a class="sort-label" href="<?php echo buildSortUrl('best_selling', $searchName, $category, $priceRange, $page); ?>"><button class="filter-btn">Best Selling</button></a>
                     <div class="filter-option">
                         <label class="price-btn" for="price-toggle">Price</label>
                         <input type="checkbox" id="price-toggle" class="price-toggle" />
                         <div class="price-dropdown">
-                            <a href="search_account.php?sort=low_to_high" class="price-option">Low to High</a>
-                            <a href="search_account.php?sort=high_to_low" class="price-option">High to Low</a>
+                            <a href="<?php echo buildSortUrl('low_to_high', $searchName, $category, $priceRange, $page); ?>" class="price-option">Low to High</a>
+                            <a href="<?php echo buildSortUrl('high_to_low', $searchName, $category, $priceRange, $page); ?>" class="price-option">High to Low</a>
                         </div>
                     </div>
                 </div>
@@ -237,13 +273,13 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
         <div class="pagination">
             <?php if ($page > 1): ?>
-                <a href="search_account.php?page=<?php echo $page - 1; ?>&name=<?php echo urlencode($searchName); ?>&category=<?php echo urlencode($category); ?>&price=<?php echo $priceRange; ?>">« Previous</a>
+                <a href="search_account.php?page=<?php echo $page - 1; ?>&name=<?php echo urlencode($searchName); ?>&category=<?php echo urlencode($category); ?>&price=<?php echo $priceRange; ?>&sort=<?php echo $sort; ?>">« Previous</a>
             <?php endif; ?>
             <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                <a href="search_account.php?page=<?php echo $i; ?>&name=<?php echo urlencode($searchName); ?>&category=<?php echo urlencode($category); ?>&price=<?php echo $priceRange; ?>" class="<?php echo ($i === $page) ? 'active' : ''; ?>"><?php echo $i; ?></a>
+                <a href="search_account.php?page=<?php echo $i; ?>&name=<?php echo urlencode($searchName); ?>&category=<?php echo urlencode($category); ?>&price=<?php echo $priceRange; ?>&sort=<?php echo $sort; ?>" class="<?php echo ($i === $page) ? 'active' : ''; ?>"><?php echo $i; ?></a>
             <?php endfor; ?>
             <?php if ($page < $totalPages): ?>
-                <a href="search_account.php?page=<?php echo $page + 1; ?>&name=<?php echo urlencode($searchName); ?>&category=<?php echo urlencode($category); ?>&price=<?php echo $priceRange; ?>">Next »</a>
+                <a href="search_account.php?page=<?php echo $page + 1; ?>&name=<?php echo urlencode($searchName); ?>&category=<?php echo urlencode($category); ?>&price=<?php echo $priceRange; ?>&sort=<?php echo $sort; ?>">Next »</a>
             <?php endif; ?>
         </div>
     </main>
