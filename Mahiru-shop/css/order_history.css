@@ -110,6 +110,11 @@
   color: #c62828;
 }
 
+.status-badge.pending {
+  background-color: #fffde7;
+  color: #f9a825;
+}
+
 /* Details Button Styles */
 .details-btn {
   display: inline-block;
@@ -178,4 +183,23 @@
       content: attr(data-label);
       font-weight: bold;
   }
+}
+
+/* Sticky Footer Styles */
+html, body {
+    height: 100% !important; /* Đảm bảo html và body có chiều cao 100% */
+}
+
+.page-wrapper {
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 100vh !important; /* Chiều cao tối thiểu là 100% viewport height */
+}
+
+.page-wrapper main {
+    flex: 1 0 auto !important; /* Main sẽ mở rộng để chiếm không gian còn lại */
+}
+
+.page-wrapper footer {
+    flex-shrink: 0 !important; /* Footer không bị co lại */
 }
