@@ -56,6 +56,11 @@ $detailsStmt->bindValue(':order_id', $orderId, PDO::PARAM_INT);
 $detailsStmt->execute();
 $orderDetails = $detailsStmt->fetchAll(PDO::FETCH_ASSOC);
 
+// Update the order status to 'completed' to reflect in admin revenue
+$updateStatusStmt = $conn->prepare("UPDATE orders SET status = 'completed' WHERE id = :order_id");
+$updateStatusStmt->bindValue(':order_id', $orderId, PDO::PARAM_INT);
+$updateStatusStmt->execute();
+
 // Xóa thông báo thành công sau khi hiển thị
 unset($_SESSION['order_success']);
 unset($_SESSION['order_id']);
