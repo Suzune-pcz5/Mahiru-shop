@@ -18,11 +18,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $pass = trim($_POST['password']);
     $address = trim($_POST['address']);
     $phone = trim($_POST['phone']);
-    $role = "Users"; // Mặc định là Users
-    $created_at = date("Y-m-d H:i:s"); // Lấy thời gian hiện tại
+    $role = "Users"; // Default role is Users
+    $created_at = date("Y-m-d H:i:s"); // Current timestamp
 
     if (!empty($user_name) && !empty($email) && !empty($pass) && !empty($address) && !empty($phone)) {
-        // Kiểm tra xem có Admin nào chưa, nếu chưa có thì tạo Admin đầu tiên
+        // Check if there is any Admin yet; if not, assign the first user as Admin
         $check_admin = $conn->query("SELECT COUNT(*) as total FROM users WHERE role='Admin'");
         $admin_count = $check_admin->fetch_assoc()['total'];
 
@@ -30,14 +30,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $role = "Admin";
         }
 
-        // Kiểm tra email đã tồn tại chưa
+        // Check if email already exists
         $stmt = $conn->prepare("SELECT * FROM users WHERE email = ?");
         $stmt->bind_param("s", $email);
         $stmt->execute();
         $result = $stmt->get_result();
 
         if ($row = $result->fetch_assoc()) {
-            // Email đã tồn tại -> Đăng nhập luôn
+            // Email exists -> Log in directly
+            $_SESSION['user_id'] = $row['id'];
             $_SESSION['user_name'] = $row['username'];
             $_SESSION['user_email'] = $row['email'];
             $_SESSION['user_address'] = $row['address'];
@@ -50,45 +51,44 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                   </script>";
             exit();
         } else {
-            // Tạo tài khoản mới
+            // Create a new account
             $hashed_password = password_hash($pass, PASSWORD_BCRYPT);
 
-            // Tìm id nhỏ nhất còn trống
-            $result = $conn->query("SELECT MIN(id) as next_id FROM (
-                SELECT a.id + 1 as id
-                FROM users a
-                LEFT JOIN users b ON a.id + 1 = b.id
-                WHERE b.id IS NULL AND a.id < (SELECT MAX(id) FROM users)
-                UNION
-                SELECT 1 as id
-                WHERE NOT EXISTS (SELECT id FROM users WHERE id = 1)
-            ) t WHERE t.id > 0 LIMIT 1");
-
+            // Find the smallest available ID (fill gaps)
+            $result = $conn->query("SELECT id + 1 AS next_id 
+                                    FROM users 
+                                    WHERE id + 1 NOT IN (SELECT id FROM users) 
+                                    ORDER BY next_id 
+                                    LIMIT 1");
             $row = $result->fetch_assoc();
-            $next_id = $row['next_id'];
+            $next_id = $row['next_id'] ?? 1; // Default to 1 if no rows exist
 
-            if ($next_id === null) {
-                // Nếu không có khoảng trống, lấy giá trị AUTO_INCREMENT tiếp theo
-                $next_id = $conn->query("SHOW TABLE STATUS LIKE 'users'")->fetch_assoc()['Auto_increment'];
+            // Ensure the ID is not already taken (race condition check)
+            $checkStmt = $conn->prepare("SELECT id FROM users WHERE id = ?");
+            $checkStmt->bind_param("i", $next_id);
+            $checkStmt->execute();
+            $checkResult = $checkStmt->get_result();
+            while ($checkResult->fetch_assoc()) {
+                $next_id++; // Increment until an available ID is found
+                $checkStmt->bind_param("i", $next_id);
+                $checkStmt->execute();
+                $checkResult = $stmt->get_result();
             }
 
-            // Kiểm tra xem id đã tồn tại chưa, nếu có thì tăng lên 1
-            while ($conn->query("SELECT id FROM users WHERE id = $next_id")->num_rows > 0) {
-                $next_id++;
-            }
-
-            // Chèn bản ghi với id được gán thủ công
-            $stmt = $conn->prepare("INSERT INTO users (id, username, email, password, address, phone, role, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            // Insert the new record with the assigned ID
+            $stmt = $conn->prepare("INSERT INTO users (id, username, email, password, address, phone, role, created_at) 
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->bind_param("isssssss", $next_id, $user_name, $email, $hashed_password, $address, $phone, $role, $created_at);
 
             if ($stmt->execute()) {
-                // Đăng ký thành công -> Đăng nhập ngay
+                // Registration successful -> Log in immediately
+                $_SESSION['user_id'] = $next_id; // Thêm dòng này để lưu user_id
                 $_SESSION['user_name'] = $user_name;
                 $_SESSION['user_email'] = $email;
                 $_SESSION['user_address'] = $address;
                 $_SESSION['user_phone'] = $phone;
                 $_SESSION['user_role'] = $role;
-
+            
                 echo "<script>
                         alert('Account registered successfully! Logging in...');
                         window.location.href = 'index_account.php';
