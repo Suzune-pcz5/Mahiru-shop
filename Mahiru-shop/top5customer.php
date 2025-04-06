@@ -1,7 +1,6 @@
 <?php
 session_start();
 
-
 // Kết nối cơ sở dữ liệu
 $servername = "localhost";
 $username   = "root";
@@ -16,16 +15,32 @@ try {
     exit();
 }
 
-// Truy vấn top 5 khách hàng dựa trên tổng doanh thu
-$stmt = $conn->prepare("
+// Lấy giá trị ngày từ form (GET)
+$fromDate = $_GET['start-date'] ?? '';
+$toDate   = $_GET['end-date'] ?? '';
+
+// Tạo truy vấn và điều kiện lọc nếu có ngày
+$query = "
     SELECT u.id, u.username, SUM(o.total_price) as total_revenue
     FROM users u
     JOIN orders o ON u.id = o.user_id
+";
+$params = [];
+
+if (!empty($fromDate) && !empty($toDate)) {
+    $query .= " WHERE o.created_at BETWEEN :fromDate AND :toDate";
+    $params[':fromDate'] = $fromDate . ' 00:00:00';
+    $params[':toDate']   = $toDate . ' 23:59:59';
+}
+
+$query .= "
     GROUP BY u.id, u.username
     ORDER BY total_revenue DESC 
     LIMIT 5
-");
-$stmt->execute();
+";
+
+$stmt = $conn->prepare($query);
+$stmt->execute($params);
 $topCustomers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
@@ -34,9 +49,9 @@ $topCustomers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Mahiru Shop</title>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <title>Top 5 Customers</title>
     <link rel="stylesheet" href="./css/order.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
     <header>
@@ -52,30 +67,59 @@ $topCustomers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </ul>
             </nav>
             <div class="user-info">
-                <div class="user-icon">
-                    <i data-lucide="user-circle"></i>
-                </div>
+                <i data-lucide="user-circle"></i>
                 <span class="admin-name">ADMIN</span>
                 <a href="./loginad.php" class="logout">Log out</a>
             </div>
         </div>
     </header>
+
     <main>
-        <div class="container admin-panel" style="
-        border-left-width: 0px;
-        padding-left: 0px;
-        padding-right: 0px;
-    ">
+        <div class="container admin-panel">
             <div class="admin-sidebar">
                 <h2>Business Performance</h2>
                 <ul>
                     <li><a href="./business_performance.php">Product Statistics</a></li>
                     <li><a href="./top5customer.php" class="active">Top 5 Customer</a></li>
-                    <li><a href="./top5product.php"class="active"> Top 5 Product</a></li>
+                    <li><a href="./top5product.php">Top 5 Product</a></li>
                 </ul>
             </div>
+
             <section class="admin-content">
                 <h3>Top 5 Customers</h3>
+
+                <!-- Bộ lọc thời gian -->
+               
+                <div class="filters">
+                    <form method="GET" action="" class="filters-row">
+                        <div class="filter-group">
+                            <label class="filter-label"></label>
+                            <div class="date-range">
+                                <div>
+                                    <label>From:</label>
+                                    <input 
+                                        type="date" 
+                                        id="start-date" 
+                                        name="start-date"
+                                        value="<?php echo htmlspecialchars($fromDate); ?>"
+                                    />
+                                </div>
+                                <div class="date-to">
+                                    <label>To:</label>
+                                    <input 
+                                        type="date" 
+                                        id="end-date" 
+                                        name="end-date"
+                                        value="<?php echo htmlspecialchars($toDate); ?>"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn">Search</button>
+                    </form>
+                </div>
+
+                <!-- Bảng khách hàng -->
                 <table class="table-wrapper">
                     <thead>
                         <tr>
@@ -100,7 +144,7 @@ $topCustomers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="4">No customers found.</td>
+                                <td colspan="4">No customers found in selected range.</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>
@@ -108,11 +152,13 @@ $topCustomers = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </section>
         </div>
     </main>
+
     <footer>
         <div class="container">
             <p>©Mahiru Shop. We are pleased to serve you.</p>
         </div>
     </footer>
+
     <script>
         lucide.createIcons();
     </script>
