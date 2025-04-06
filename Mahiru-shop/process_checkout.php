@@ -37,6 +37,7 @@ $state = isset($_POST['state']) ? trim($_POST['state']) : '';
 $zipCode = isset($_POST['zip_code']) ? trim($_POST['zip_code']) : '';
 $country = isset($_POST['country']) ? trim($_POST['country']) : '';
 $totalPrice = isset($_POST['total']) ? (float)$_POST['total'] : 0;
+$paymentMethod = isset($_POST['payment']) ? trim($_POST['payment']) : ''; // Lấy giá trị payment từ form
 
 // Gộp các trường địa chỉ thành một chuỗi
 $addressParts = array_filter([$streetAddress, $city, $state, $zipCode, $country], function($value) {
@@ -45,9 +46,9 @@ $addressParts = array_filter([$streetAddress, $city, $state, $zipCode, $country]
 $address = implode(', ', $addressParts);
 
 // Kiểm tra dữ liệu đầu vào
-if (empty($name) || empty($address) || $totalPrice <= 0) {
+if (empty($name) || empty($address) || $totalPrice <= 0 || empty($paymentMethod)) {
     // Nếu dữ liệu không hợp lệ, chuyển hướng về checkout.php với thông báo lỗi
-    $_SESSION['error'] = "Please fill in all required fields correctly.";
+    $_SESSION['error'] = "Please fill in all required fields correctly, including payment method.";
     header("Location: checkout.php");
     exit();
 }
@@ -76,13 +77,14 @@ $conn->beginTransaction();
 try {
     // Lưu đơn hàng vào bảng orders
     $orderStmt = $conn->prepare("
-        INSERT INTO orders (user_id, name, address, total_price, status)
-        VALUES (:user_id, :name, :address, :total_price, 'pending')
+        INSERT INTO orders (user_id, name, address, total_price, payment_method, status, created_at)
+        VALUES (:user_id, :name, :address, :total_price, :payment_method, 'pending', NOW())
     ");
     $orderStmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
     $orderStmt->bindValue(':name', $name, PDO::PARAM_STR);
     $orderStmt->bindValue(':address', $address, PDO::PARAM_STR);
     $orderStmt->bindValue(':total_price', $totalPrice, PDO::PARAM_STR);
+    $orderStmt->bindValue(':payment_method', $paymentMethod, PDO::PARAM_STR); // Lưu payment_method
     $orderStmt->execute();
 
     // Lấy ID của đơn hàng vừa tạo
@@ -122,6 +124,7 @@ try {
     // Lưu thông tin đơn hàng vào session để hiển thị trên trang xác nhận
     $_SESSION['order_id'] = $orderId;
     $_SESSION['order_success'] = "Your order has been placed successfully!";
+    $_SESSION['payment_method'] = $paymentMethod; // Lưu payment_method vào session để hiển thị trên trang xác nhận
 
     // Chuyển hướng đến trang xác nhận đơn hàng
     header("Location: order_confirmation.php");
