@@ -144,6 +144,7 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <button class="filter-tab" data-status="processing">Processing</button>
                             <button class="filter-tab" data-status="delivered">Delivered</button>
                             <button class="filter-tab" data-status="cancelled">Cancelled</button>
+                            <button class="filter-tab" data-status="completed">Completed</button>
                         </div>
                         <div class="date-filter">
                             <input type="date" id="from-date" class="date-input" value="1970-01-01">
