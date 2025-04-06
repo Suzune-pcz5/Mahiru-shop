@@ -453,6 +453,12 @@ footer {
     font-weight: bold;
     margin-bottom: 5px;
 }
+select{
+    display: flex;
+    flex-direction: column;
+    padding-top: 15px;
+    padding-bottom: 15px;
+}
 textarea#product-description, 
 input[type="text"], 
 input[type="number"] {
