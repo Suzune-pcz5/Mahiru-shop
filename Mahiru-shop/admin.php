@@ -1,6 +1,6 @@
 <?php
 session_start();
-
+                 
 // Kết nối cơ sở dữ liệu
 $servername = "localhost";
 $username = "root";
@@ -38,9 +38,9 @@ $revenue_row = $revenue_result->fetch_assoc();
 $revenue = $revenue_row['total'] ?? 0;
 
 // 5. Lấy danh sách đơn hàng gần đây (giới hạn 3 bản ghi)
-$recent_orders_sql = "SELECT o.id, u.username, o.created_at, o.total_price, o.status 
+$recent_orders_sql = "SELECT o.id, u.username AS customer_name, o.created_at, o.total_price, o.status 
                       FROM orders o 
-                      JOIN users u ON o.user_id = u.id
+                      LEFT JOIN users u ON o.user_id = u.id 
                       ORDER BY o.created_at DESC 
                       LIMIT 3";
 $recent_orders_result = $conn->query($recent_orders_sql);
@@ -118,7 +118,7 @@ $top_products_result = $conn->query($top_products_sql);
                             <thead>
                                 <tr>
                                     <th>Order ID</th>
-                                    <th>User</th>
+                                    <th>Customer</th>
                                     <th>Date</th>
                                     <th>Total</th>
                                     <th>Status</th>
@@ -130,7 +130,7 @@ $top_products_result = $conn->query($top_products_sql);
                                     <?php while ($order = $recent_orders_result->fetch_assoc()): ?>
                                         <tr>
                                             <td>#<?php echo $order['id']; ?></td>
-                                            <td><?php echo htmlspecialchars($order['username']); ?></td>
+                                            <td><?php echo htmlspecialchars($order['customer_name'] ?? 'Unknown User'); ?></td>
                                             <td><?php echo date('Y-m-d', strtotime($order['created_at'])); ?></td>
                                             <td>$<?php echo number_format($order['total_price'], 2); ?></td>
                                             <td><?php echo ucfirst($order['status']); ?></td>
