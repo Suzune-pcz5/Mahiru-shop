@@ -34,7 +34,7 @@ $stmt = $conn->prepare("
         (@row_number:=@row_number + 1) AS order_number,
         o.id,
         o.created_at AS date,
-        'Cash' AS payment,
+        o.payment_method AS payment,  -- Sửa ở đây: Lấy giá trị từ cột payment_method
         o.status,
         o.total_price AS total
     FROM orders o
