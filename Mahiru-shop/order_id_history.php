@@ -186,9 +186,7 @@ $estimatedDelivery = (clone $orderDate)->modify('+5 days');
                     </div>
                     <div class="payment-info">
                         <h2>Payment Information</h2>
-                        <p><strong>Payment Method:</strong> Cash</p>
-                        <!-- Nếu có cột payment_method trong bảng orders, bạn có thể thay bằng: -->
-                        <!-- <p><strong>Payment Method:</strong> <?php echo htmlspecialchars(ucfirst($order['payment_method'])); ?></p> -->
+                        <p><strong>Payment Method:</strong> <?php echo htmlspecialchars(ucfirst($order['payment_method'])); ?></p>
                     </div>
                 </div>
             </div>
