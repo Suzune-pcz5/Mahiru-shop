@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS orders (
     name VARCHAR(255) NOT NULL COMMENT 'Tên người nhận hàng',
     address TEXT NOT NULL COMMENT 'Địa chỉ nhận hàng',
     total_price DECIMAL(10,2) NOT NULL COMMENT 'Tổng giá trị đơn hàng',
-    method_payment VARCHAR(50) NOT NULL COMMENT 'Phương thức thanh toán',
+    payment_method VARCHAR(50) NOT NULL COMMENT 'Phương thức thanh toán',
     status VARCHAR(20) DEFAULT 'pending' COMMENT 'Trạng thái đơn hàng',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Ngày đặt hàng',
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
