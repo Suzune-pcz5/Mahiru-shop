@@ -57,7 +57,7 @@ $detailsStmt->execute();
 $orderDetails = $detailsStmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Update the order status to 'completed' to reflect in admin revenue
-$updateStatusStmt = $conn->prepare("UPDATE orders SET status = 'completed' WHERE id = :order_id");
+$updateStatusStmt = $conn->prepare("UPDATE orders SET status = 'pending' WHERE id = :order_id");
 $updateStatusStmt->bindValue(':order_id', $orderId, PDO::PARAM_INT);
 $updateStatusStmt->execute();
 
