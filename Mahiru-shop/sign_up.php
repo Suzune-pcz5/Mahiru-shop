@@ -18,7 +18,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $pass = trim($_POST['password']);
     $address = trim($_POST['address']);
     $phone = trim($_POST['phone']);
-    $role = "Users"; // Default role is Users
+    $role = "User"; // Default role is User
     $created_at = date("Y-m-d H:i:s"); // Current timestamp
 
     if (!empty($user_name) && !empty($email) && !empty($pass) && !empty($address) && !empty($phone)) {
