@@ -12,16 +12,22 @@ if ($conn->connect_error) {
     die("Kết nối thất bại: " . $conn->connect_error);
 }
 
+// Xử lý tìm kiếm
+$search = isset($_GET['search']) ? $conn->real_escape_string($_GET['search']) : '';
+
 // Phân trang
-$limit = 10; // Số sản phẩm hiển thị trên mỗi trang
+$limit = 10;
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 if ($page < 1) {
     $page = 1;
 }
 $offset = ($page - 1) * $limit;
 
-// Tính tổng số sản phẩm
+// Tính tổng số sản phẩm với điều kiện tìm kiếm
 $count_sql = "SELECT COUNT(*) AS total FROM products";
+if (!empty($search)) {
+    $count_sql .= " WHERE name LIKE '%$search%' OR category LIKE '%$search%'";
+}
 $count_result = $conn->query($count_sql);
 $totalProducts = 0;
 if ($count_result && $count_result->num_rows > 0) {
@@ -30,8 +36,12 @@ if ($count_result && $count_result->num_rows > 0) {
 }
 $totalPages = ceil($totalProducts / $limit);
 
-// Truy vấn lấy danh sách sản phẩm với phân trang
-$sql = "SELECT * FROM products LIMIT $limit OFFSET $offset";
+// Truy vấn lấy danh sách sản phẩm
+$sql = "SELECT * FROM products";
+if (!empty($search)) {
+    $sql .= " WHERE name LIKE '%$search%' OR category LIKE '%$search%'";
+}
+$sql .= " LIMIT $limit OFFSET $offset";
 $result = $conn->query($sql);
 ?>
 
@@ -43,6 +53,31 @@ $result = $conn->query($sql);
     <title>Product Management - Mahiru Shop</title>
     <link rel="stylesheet" href="./css/admin-styles.css">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .product-search {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .product-search input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .product-search button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .product-search button:hover {
+            background-color: #45a049;
+        }
+    </style>
 </head>
 <body>
     <div class="page-container">
@@ -79,10 +114,12 @@ $result = $conn->query($sql);
                     </div>
                     <div class="admin-content">
                         <h2>Product List</h2>
-                        <div class="product-search">
-                            <input type="text" id="product-search" placeholder="Search for a product...">
-                            <button class="action-btn">Search</button>
-                        </div>
+                        <form method="GET" class="product-search">
+                            <input type="text" name="search" id="product-search" 
+                                   placeholder="Search for a product..." 
+                                   value="<?php echo htmlspecialchars($search); ?>">
+                            <button type="submit">Search</button>
+                        </form>
                         <table class="product-table">
                             <thead>
                                 <tr>
@@ -114,10 +151,8 @@ $result = $conn->query($sql);
                             </tbody>
                         </table>
 
-                        <!-- Phân trang -->
                         <div class="pagination">
                             <?php if($totalPages > 1): ?>
-                                <!-- Nút về trang trước -->
                                 <?php if($page > 1): ?>
                                     <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page-1])); ?>">&laquo;</a>
                                 <?php else: ?>
@@ -133,7 +168,6 @@ $result = $conn->query($sql);
                                     </a>
                                 <?php endfor; ?>
 
-                                <!-- Nút qua trang kế -->
                                 <?php if($page < $totalPages): ?>
                                     <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page+1])); ?>">&raquo;</a>
                                 <?php else: ?>
