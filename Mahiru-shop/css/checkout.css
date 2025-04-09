@@ -56,9 +56,10 @@
     margin-bottom: 10px;
 }
 
-select,
-input[type="text"],
-input[type="tel"] {
+/* Chỉ áp dụng kiểu dáng cho input và select bên trong .checkout-form */
+.checkout-form select,
+.checkout-form input[type="text"],
+.checkout-form input[type="tel"] {
     width: 100%;
     padding: 10px;
     margin-bottom: 10px;
