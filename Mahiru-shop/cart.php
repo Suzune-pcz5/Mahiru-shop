@@ -34,12 +34,12 @@ if (isset($_GET['remove'])) {
     exit;
 }
 
-// Xử lý cập nhật số lượng
+// Xử lý cập nhật số lượng (đã sửa điều kiện từ 10 lên 99)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_cart'])) {
     foreach ($_POST['quantity'] as $id => $qty) {
         $id = (int)$id;
         $qty = (int)$qty;
-        if ($qty > 0 && $qty <= 10) {
+        if ($qty > 0 && $qty <= 99) {  // Đã sửa từ 10 lên 99
             $updateStmt = $conn->prepare("UPDATE cart SET quantity = :quantity WHERE user_id = :user_id AND product_id = :product_id");
             $updateStmt->bindValue(':quantity', $qty, PDO::PARAM_INT);
             $updateStmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
@@ -56,11 +56,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_cart'])) {
     exit;
 }
 
-// ========== LẤY DANH MỤC TỪ BẢNG products ==========
+// Lấy danh mục từ bảng products
 $categoryQuery = $conn->query("SELECT DISTINCT category FROM products");
 $categories = $categoryQuery->fetchAll(PDO::FETCH_ASSOC);
 
-// Lấy dữ liệu giỏ hàng, bao gồm cột description
+// Lấy dữ liệu giỏ hàng
 $stmt = $conn->prepare("
     SELECT c.product_id, c.quantity, p.name, p.price, p.image, p.description 
     FROM cart c 
@@ -174,7 +174,7 @@ foreach ($cartItems as $item) {
                                         <td>
                                             <div class="quantity-control">
                                                 <button type="button" class="decrease-btn">-</button>
-                                                <input type="number" name="quantity[<?php echo $item['product_id']; ?>]" value="<?php echo $item['quantity']; ?>" min="1" max="10" class="quantity-input" readonly>
+                                                <input type="number" name="quantity[<?php echo $item['product_id']; ?>]" value="<?php echo $item['quantity']; ?>" min="1" max="99" class="quantity-input" readonly> <!-- Đã sửa max từ 10 lên 99 -->
                                                 <button type="button" class="increase-btn">+</button>
                                             </div>
                                         </td>
@@ -219,5 +219,29 @@ foreach ($cartItems as $item) {
     </footer>
 
     <script src="./js/cart.js"></script>
+    <script>
+        // Cập nhật JavaScript để phù hợp với giới hạn mới (99)
+        document.querySelectorAll('.increase-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                const input = button.parentElement.querySelector('.quantity-input');
+                let value = parseInt(input.value);
+                if (value < 99) {  // Đã sửa từ 10 lên 99
+                    input.value = value + 1;
+                } else {
+                    alert('Maximum quantity per product is 99');
+                }
+            });
+        });
+
+        document.querySelectorAll('.decrease-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                const input = button.parentElement.querySelector('.quantity-input');
+                let value = parseInt(input.value);
+                if (value > 1) {
+                    input.value = value - 1;
+                }
+            });
+        });
+    </script>
 </body>
-</html> 
+</html>
