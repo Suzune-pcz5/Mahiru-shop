@@ -10,11 +10,11 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// 1) Xây dựng truy vấn đếm tổng số orders
+// 1) Truy vấn đếm tổng số orders
 $sql_count = "SELECT COUNT(*) AS total FROM orders o JOIN users u ON o.user_id = u.id WHERE 1=1";
 
-// 2) Xây dựng truy vấn lấy dữ liệu
-$sql_data = "SELECT o.*, u.id AS user_id, u.username 
+// 2) Truy vấn dữ liệu có address từ bảng users
+$sql_data = "SELECT o.*, u.id AS user_id, u.username, u.address 
              FROM orders o 
              JOIN users u ON o.user_id = u.id 
              WHERE 1=1";
@@ -42,9 +42,9 @@ if (!empty($_GET['order-status'])) {
     $bindTypes .= "s";
     $bindValues[] = $_GET['order-status'];
 }
-// Filter: address (sử dụng LIKE để hỗ trợ tìm chuỗi)
+// Filter: address (từ bảng users)
 if (!empty($_GET['address'])) {
-    $conditions .= " AND o.address LIKE ?";
+    $conditions .= " AND u.address LIKE ?";
     $bindTypes .= "s";
     $bindValues[] = "%" . $_GET['address'] . "%";
 }
@@ -175,7 +175,6 @@ $result_data = $stmt_data->get_result();
               <tr>
                 <th>Order ID</th>
                 <th>Customer</th>
-                <th>Username</th>
                 <th>Date</th>
                 <th>Address</th>
                 <th>Total</th>
@@ -191,10 +190,9 @@ $result_data = $stmt_data->get_result();
                   $statusText = ucfirst($row['status']);
                   echo "<tr>";
                   echo "<td>#{$row['id']}</td>";
-                  echo "<td>" . htmlspecialchars($row['name']) . "</td>";
                   echo "<td>" . htmlspecialchars($row['username']) . "</td>";
                   echo "<td>{$date}</td>";
-                  echo "<td>" . htmlspecialchars($row['address']) . "</td>";
+                  echo "<td>" . htmlspecialchars($row['address']) . "</td>"; // từ bảng users
                   echo "<td>\${$row['total_price']}</td>";
                   echo "<td>{$statusText}</td>";
                   echo "<td><a href='./detail-order.php?id={$row['id']}' class='btn'>View Details</a></td>";
