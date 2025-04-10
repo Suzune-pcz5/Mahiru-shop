@@ -1,4 +1,4 @@
-# Mahiru-shop nhóm lồn đéo chịu làm cay vcl
+# Mahiru-shop 
 Phạm Phú Cường-3123411046
 
 Phạm Nguyên Phát - 3123411221
