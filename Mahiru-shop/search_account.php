@@ -226,23 +226,22 @@ function buildSortUrl($sortOption, $searchName, $category, $priceRange, $page) {
                 </div>
             </div>
         </div>
-        <div class="main-header">
-            <div class="container">
-                <div class="logo">
-                    <a href="index_account.php" class="logo-link"><h1>MAHIRU<span>.</span></h1></a>
-                </div>
-                <div class="search-bar">
-    <form action="search.php" method="GET">
-        <input type="text" name="name" placeholder="Search here" value="<?php echo htmlspecialchars($searchName); ?>" />
-        <button type="submit" class="search-button">Search</button>
-    </form>
-</div>
-                </div>
-                <div class="user-menu">
-                    <a href="cart.php" class="icon"><i class="fas fa-shopping-cart"></i></a>
-                </div>
-            </div>
+<div class="main-header">
+    <div class="container">
+        <div class="logo">
+            <a href="index_account.php" class="logo-link"><h1>MAHIRU<span>.</span></h1></a>
         </div>
+        <div class="search-bar">
+            <form action="search.php" method="GET">
+                <input type="text" name="name" placeholder="Search here" value="<?php echo htmlspecialchars($searchName); ?>" />
+                <button type="submit" class="search-button">Search</button>
+            </form>
+        </div>
+        <div class="user-menu">
+            <a href="cart.php" class="icon"><i class="fas fa-shopping-cart"></i></a>
+        </div>
+    </div>
+</div>
         <nav class="category-nav">
             <div class="container">
                 <ul class="category-list">
