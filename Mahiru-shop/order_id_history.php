@@ -40,6 +40,10 @@ if (!$order) {
     exit();
 }
 
+// ========== LẤY DANH MỤC TỪ BẢNG products ==========
+$categoryQuery = $conn->query("SELECT DISTINCT category FROM products");
+$categories = $categoryQuery->fetchAll(PDO::FETCH_ASSOC);
+
 // Lấy chi tiết đơn hàng
 $detailsStmt = $conn->prepare("
     SELECT oi.product_id, oi.quantity, oi.price, p.name, p.image, p.description 
@@ -110,15 +114,14 @@ $estimatedDelivery = (clone $orderDate)->modify('+5 days');
       </div>
       <nav>
         <div class="container">
-          <ul>
-            <li><a href="index_account.php">Home</a></li>
-            <li><a href="category_acc_gundam.php">Gundam</a></li>
-            <li><a href="category_acc_kamen_rider.php">Kamen Rider</a></li>
-            <li><a href="category_acc_standee.php">Standee</a></li>
-            <li><a href="category_acc_keychain.php">Keychain</a></li>
-            <li><a href="category_acc_plush.php">Plush</a></li>
-            <li><a href="category_acc_figure.php">Figure</a></li>
-          </ul>
+        <ul>
+                <li><a href="index.php">Home</a></li>
+                <?php foreach ($categories as $cat): ?>
+                    <li><a href="index.php?category=<?php echo htmlspecialchars($cat['category']); ?>">
+                        <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $cat['category']))); ?>
+                    </a></li>
+                <?php endforeach; ?>
+            </ul>
         </div>
       </nav>
     </header>
