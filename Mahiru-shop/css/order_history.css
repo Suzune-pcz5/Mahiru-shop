@@ -19,16 +19,15 @@
 /* Filter Styles */
 .order-filters {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column; /* Hiển thị theo cột */
+  gap: 15px; /* Khoảng cách giữa các phần tử */
   margin-bottom: 20px;
-  flex-wrap: wrap;
-  gap: 20px;
 }
 
 .filter-tabs {
   display: flex;
   gap: 10px;
+  justify-content: center; /* Căn giữa các tab */
 }
 
 .filter-tab {
@@ -55,12 +54,29 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  justify-content: center; /* Căn giữa bộ lọc ngày */
 }
 
 .date-input {
   padding: 8px;
   border: 1px solid #ddd;
   border-radius: 5px;
+  width: 150px; /* Đặt chiều rộng cố định cho input ngày */
+}
+
+.date-filter .search-button {
+  padding: 8px 16px;
+  background-color: #d10024;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.date-filter .search-button:hover {
+  background-color: #ff1a3e;
 }
 
 /* Table Styles */
@@ -133,17 +149,30 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .order-filters {
-      flex-direction: column;
-      align-items: stretch;
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .filter-tabs {
-      overflow-x: auto;
-      padding-bottom: 10px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+    justify-content: flex-start; /* Trên mobile, các tab sẽ căn trái và có thể cuộn ngang */
   }
 
   .date-filter {
-      flex-wrap: wrap;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .date-input {
+    width: 100%; /* Trên mobile, input ngày chiếm toàn bộ chiều rộng */
+    max-width: 150px;
+  }
+
+  .date-filter .search-button {
+    padding: 8px;
+    width: 100%;
+    max-width: 150px;
   }
 
   .order-table,
@@ -152,54 +181,54 @@
   .order-table th,
   .order-table td,
   .order-table tr {
-      display: block;
+    display: block;
   }
 
   .order-table thead tr {
-      position: absolute;
-      top: -9999px;
-      left: -9999px;
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
   }
 
   .order-table tr {
-      border: 1px solid #ccc;
-      margin-bottom: 10px;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
   }
 
   .order-table td {
-      border: none;
-      border-bottom: 1px solid #eee;
-      position: relative;
-      padding-left: 50%;
+    border: none;
+    border-bottom: 1px solid #eee;
+    position: relative;
+    padding-left: 50%;
   }
 
   .order-table td:before {
-      position: absolute;
-      top: 6px;
-      left: 6px;
-      width: 45%;
-      padding-right: 10px;
-      white-space: nowrap;
-      content: attr(data-label);
-      font-weight: bold;
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    width: 45%;
+    padding-right: 10px;
+    white-space: nowrap;
+    content: attr(data-label);
+    font-weight: bold;
   }
 }
 
 /* Sticky Footer Styles */
 html, body {
-    height: 100% !important; /* Đảm bảo html và body có chiều cao 100% */
+  height: 100% !important; /* Đảm bảo html và body có chiều cao 100% */
 }
 
 .page-wrapper {
-    display: flex !important;
-    flex-direction: column !important;
-    min-height: 100vh !important; /* Chiều cao tối thiểu là 100% viewport height */
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 100vh !important; /* Chiều cao tối thiểu là 100% viewport height */
 }
 
 .page-wrapper main {
-    flex: 1 0 auto !important; /* Main sẽ mở rộng để chiếm không gian còn lại */
+  flex: 1 0 auto !important; /* Main sẽ mở rộng để chiếm không gian còn lại */
 }
 
 .page-wrapper footer {
-    flex-shrink: 0 !important; /* Footer không bị co lại */
+  flex-shrink: 0 !important; /* Footer không bị co lại */
 }
