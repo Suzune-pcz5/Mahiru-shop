@@ -58,6 +58,7 @@ $priceRange = $_GET['price'] ?? '99999999';
 if (isset($_GET['add_to_cart']) && isset($_SESSION['user_id'])) {
     $productId = (int)$_GET['add_to_cart'];
     $userId = $_SESSION['user_id'];
+    $quantity = isset($_GET['quantity']) ? (int)$_GET['quantity'] : 1; // Get the quantity from the form, default to 1 if not set
 
     // Kiểm tra xem sản phẩm đã có trong giỏ hàng chưa
     $checkStmt = $conn->prepare("SELECT * FROM cart WHERE user_id = :user_id AND product_id = :product_id");
@@ -67,18 +68,19 @@ if (isset($_GET['add_to_cart']) && isset($_SESSION['user_id'])) {
     $existingItem = $checkStmt->fetch(PDO::FETCH_ASSOC);
 
     if ($existingItem) {
-        // Nếu sản phẩm đã có, tăng số lượng
-        $newQuantity = $existingItem['quantity'] + 1;
+        // Nếu sản phẩm đã có, tăng số lượng theo quantity được chọn
+        $newQuantity = $existingItem['quantity'] + $quantity;
         $updateStmt = $conn->prepare("UPDATE cart SET quantity = :quantity WHERE user_id = :user_id AND product_id = :product_id");
         $updateStmt->bindValue(':quantity', $newQuantity, PDO::PARAM_INT);
         $updateStmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
         $updateStmt->bindValue(':product_id', $productId, PDO::PARAM_INT);
         $updateStmt->execute();
     } else {
-        // Nếu sản phẩm chưa có, thêm mới
-        $insertStmt = $conn->prepare("INSERT INTO cart (user_id, product_id, quantity) VALUES (:user_id, :product_id, 1)");
+        // Nếu sản phẩm chưa có, thêm mới với quantity được chọn
+        $insertStmt = $conn->prepare("INSERT INTO cart (user_id, product_id, quantity) VALUES (:user_id, :product_id, :quantity)");
         $insertStmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
         $insertStmt->bindValue(':product_id', $productId, PDO::PARAM_INT);
+        $insertStmt->bindValue(':quantity', $quantity, PDO::PARAM_INT);
         $insertStmt->execute();
     }
 
@@ -158,19 +160,17 @@ if (isset($_GET['add_to_cart']) && isset($_SESSION['user_id'])) {
                     <a href="index_account.php" class="logo-link"><h1>MAHIRU<span>.</span></h1></a>
                 </div>
                 <div class="search-bar">
-                <input type="text" id="searchInput" placeholder="Search here" value="<?php echo htmlspecialchars($searchName); ?>" />
-                <button class="search-button" onclick="performSearch()">Search</button>
+                    <input type="text" id="searchInput" placeholder="Search here" value="<?php echo htmlspecialchars($searchName); ?>" />
+                    <button class="search-button" onclick="performSearch()">Search</button>
                 </div>
                 <script>
                     function performSearch() {
-                 let searchValue = document.getElementById("searchInput").value.trim();
-                if (searchValue) {
-                window.location.href = "search_account.php?name=" + encodeURIComponent(searchValue);
-    }
-}
-
+                        let searchValue = document.getElementById("searchInput").value.trim();
+                        if (searchValue) {
+                            window.location.href = "search_account.php?name=" + encodeURIComponent(searchValue);
+                        }
+                    }
                 </script>
-
                 <div class="user-menu">
                     <a href="cart.php" class="icon"><i class="fas fa-shopping-cart"></i></a>
                 </div>
@@ -205,7 +205,13 @@ if (isset($_GET['add_to_cart']) && isset($_SESSION['user_id'])) {
                             <input type="number" value="1" min="1" class="quantity-input" readonly />
                             <button class="quantity-btn plus">+</button>
                         </div>
-                        <a href="product_details_acc.php?id=<?php echo $product['id']; ?>&add_to_cart=<?php echo $product['id']; ?>" class="add-to-cart">Add to Cart</a>
+                        <!-- Replace the link with a form -->
+                        <form action="product_details_acc.php" method="GET" class="add-to-cart-form">
+                            <input type="hidden" name="id" value="<?php echo $product['id']; ?>" />
+                            <input type="hidden" name="add_to_cart" value="<?php echo $product['id']; ?>" />
+                            <input type="hidden" name="quantity" class="hidden-quantity" value="1" />
+                            <button type="submit" class="add-to-cart">Add to Cart</button>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -233,10 +239,11 @@ if (isset($_GET['add_to_cart']) && isset($_SESSION['user_id'])) {
     <?php endif; ?>
 
     <script>
-        // JavaScript để xử lý tăng/giảm số lượng
+        // JavaScript để xử lý tăng/giảm số lượng và cập nhật hidden input
         document.querySelectorAll('.quantity-btn').forEach(button => {
             button.addEventListener('click', function() {
                 const input = this.parentElement.querySelector('.quantity-input');
+                const hiddenInput = this.parentElement.parentElement.querySelector('.hidden-quantity');
                 let value = parseInt(input.value);
                 if (this.classList.contains('plus')) {
                     value++;
@@ -244,6 +251,7 @@ if (isset($_GET['add_to_cart']) && isset($_SESSION['user_id'])) {
                     value--;
                 }
                 input.value = value;
+                hiddenInput.value = value; // Update the hidden input with the new quantity
             });
         });
     </script>
