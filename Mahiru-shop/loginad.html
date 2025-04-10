@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - MAHIRU. </title>
+    <link rel="stylesheet" href="./css/loginad.css">
+</head>
+<body>
+    <div class="page-container">
+        <header>
+            <div class="container">
+                <h1>MAHIRU.ADMIN</h1>
+                <nav>
+                    <ul>
+                        <!-- <li><a href="admin.html">Home</a></li> -->
+                    </ul>
+                </nav>
+            </div>
+        </header>
+
+        <main>
+            <div class="login-container">
+                <h2>Login</h2>
+                <form action="admin.html" method="get">
+                    <div class="form-group">
+                        <label for="test">Email</label>
+                        <input type="text" id="email" name="email" >
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" >
+                    </div>
+                    <button type="submit"  onclick="myFunction()">Submit</button>
+                    <script>
+                        function myFunction() {
+                          alert("Account login successful");
+                        }
+                        </script>
+                </form>
+            </div>
+        </main>
+
+        <footer>
+            <div class="container">
+                <p>&copy;  Mahiru Shop. We are pleased to serve you.</p>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>

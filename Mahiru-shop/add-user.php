@@ -20,7 +20,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $password = $_POST["password"];
     $email = $_POST["email"];
     $address = $_POST["address"];
-    $phone=$_POST["phone"];
+    $phone = $_POST["phone"];
     $role = $_POST["role"];
 
     // Kiểm tra email đã tồn tại chưa
@@ -30,14 +30,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $check_stmt->store_result();
     
     if ($check_stmt->num_rows > 0) {
-        echo "<script>alert('Email is already exits.'); window.history.back();</script>";
+        echo "<script>alert('Email is already exists.'); window.history.back();</script>";
         exit();
     }
     $check_stmt->close();
 
     // Thêm người dùng vào database
-    $stmt = $conn->prepare("INSERT INTO users (username, password, email,address,phone, role) VALUES (?,?,?, ?, ?, ?)");
-    $stmt->bind_param("ssssss", $username, $password, $email,$address,$phone, $role);
+    $stmt = $conn->prepare("INSERT INTO users (username, password, email, address, phone, role) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("ssssss", $username, $password, $email, $address, $phone, $role);
 
     if ($stmt->execute()) {
         echo "<script>alert('Thêm user thành công!'); window.location.href = 'user-management.php';</script>";
@@ -95,40 +95,41 @@ $conn->close();
                         </ul>
                     </div>
                     <div class="admin-content">
-                    <form class="user-form" action="add-user.php" method="post">
+                        <form class="user-form" action="add-user.php" method="post">
                             <div class="form-group">
                                 <label for="username">Username</label>
-                                <input type="text" id="username" name="username" >
+                                <input type="text" id="username" name="username" required>
                             </div>
 
                             <div class="form-group">
                                 <label for="password">Password</label>
                                 <div class="password-input">
-                                    <input type="password" id="password" name="password" >
+                                    <input type="password" id="password" name="password" required>
                                     <button type="button" class="password-toggle" aria-label="Toggle password visibility">
                                     </button>
                                 </div>
-                            <div class="form-group">
-                                <label for="email">Email</label>
-                                <input type="email" name="email" >
                             </div>
                             <div class="form-group">
-                                <label for="address">address</label>
-                                <input type="address" name="address" >
+                                <label for="email">Email</label>
+                                <input type="text" name="email" required> <!-- Thay type="email" thành type="text" -->
+                            </div>
+                            <div class="form-group">
+                                <label for="address">Address</label>
+                                <input type="text" name="address"> <!-- Sửa type="address" thành type="text" -->
                             </div>
                             <div class="form-group">
                                 <label for="phone">Phone</label>
-                                <input type="phone" name="phone" >
+                                <input type="text" name="phone"> <!-- Sửa type="phone" thành type="text" -->
                             </div>
                             <div class="form-group">
                                 <label for="role">Role</label>
-                                <select id="role" name="role" >
+                                <select id="role" name="role">
                                     <option value="user">User</option>
                                     <option value="admin">Admin</option>
                                 </select>
                             </div>
                             <div class="form-actions">
-                                <button type="submit" onclick="myFunction()" class="action-btn" style="background-color: green; color: white;">Add</button> 
+                                <button type="submit" class="action-btn" style="background-color: green; color: white;">Add</button> 
                             </div>
                         </form>
                     </div>

@@ -6,7 +6,7 @@ if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
-    
+
 // Kiểm tra nếu form được gửi
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header("Location: checkout.php");
@@ -96,6 +96,9 @@ try {
         VALUES (:order_id, :product_id, :quantity, :price)
     ");
     foreach ($cartItems as $item) {
+        // Debug: In ra product_id và quantity
+        echo "Product ID: " . $item['product_id'] . ", Quantity: " . $item['quantity'] . "<br>";
+        
         $detailStmt->bindValue(':order_id', $orderId, PDO::PARAM_INT);
         $detailStmt->bindValue(':product_id', $item['product_id'], PDO::PARAM_INT);
         $detailStmt->bindValue(':quantity', $item['quantity'], PDO::PARAM_INT);
@@ -111,6 +114,12 @@ try {
         $updateSoldStmt->bindValue(':quantity', $item['quantity'], PDO::PARAM_INT);
         $updateSoldStmt->bindValue(':product_id', $item['product_id'], PDO::PARAM_INT);
         $updateSoldStmt->execute();
+
+        // Kiểm tra lỗi sau khi cập nhật sold_count
+        if ($updateSoldStmt->errorCode() !== '00000') {
+            $errorInfo = $updateSoldStmt->errorInfo();
+            echo "SQL Error: " . $errorInfo[2];
+        }
     }
 
     // Xóa giỏ hàng của người dùng

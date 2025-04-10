@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $newStatus = isset($_POST['new-status']) ? $_POST['new-status'] : '';
 
     // Kiểm tra trạng thái mới có hợp lệ không
-    $validStatuses = ['pending', 'processing', 'confirmed', 'delivered', 'cancelled'];
+    $validStatuses = ['pending', 'processing', 'confirmed', 'completed', 'cancelled'];
     if (in_array($newStatus, $validStatuses)) {
         // Cập nhật trạng thái trong cơ sở dữ liệu
         $updateStmt = $conn->prepare("UPDATE orders SET status = :status WHERE id = :order_id");
@@ -111,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <option value="pending" <?php if ($order['status'] === 'pending') echo 'selected'; ?>>Pending</option>
                             <option value="processing" <?php if ($order['status'] === 'processing') echo 'selected'; ?>>Processing</option>
                             <option value="confirmed" <?php if ($order['status'] === 'confirmed') echo 'selected'; ?>>Confirmed</option>
-                            <option value="delivered" <?php if ($order['status'] === 'delivered') echo 'selected'; ?>>Delivered</option>
+                            <option value="completed" <?php if ($order['status'] === 'completed') echo 'selected'; ?>>Completed</option>
                             <option value="cancelled" <?php if ($order['status'] === 'cancelled') echo 'selected'; ?>>Cancelled</option>
                         </select>
                     </div>

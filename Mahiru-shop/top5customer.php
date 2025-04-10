@@ -67,7 +67,9 @@ $topCustomers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </ul>
             </nav>
             <div class="user-info">
-                <i data-lucide="user-circle"></i>
+                <div class="user-icon">
+                    <i data-lucide="user-circle"></i>
+                </div>
                 <span class="admin-name">ADMIN</span>
                 <a href="./loginad.php" class="logout">Log out</a>
             </div>
@@ -75,13 +77,13 @@ $topCustomers = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </header>
 
     <main>
-        <div class="container admin-panel">
+        <div class="container admin-panel" style="border-left-width: 0; padding-left: 0; padding-right: 0;">
             <div class="admin-sidebar">
                 <h2>Business Performance</h2>
                 <ul>
                     <li><a href="./business_performance.php">Product Statistics</a></li>
                     <li><a href="./top5customer.php" class="active">Top 5 Customer</a></li>
-                    <li><a href="./top5product.php">Top 5 Product</a></li>
+                
                 </ul>
             </div>
 
@@ -89,7 +91,6 @@ $topCustomers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <h3>Top 5 Customers</h3>
 
                 <!-- Bộ lọc thời gian -->
-               
                 <div class="filters">
                     <form method="GET" action="" class="filters-row">
                         <div class="filter-group">

@@ -163,7 +163,7 @@ $total = $subtotal + $shipping;
                         <h2 class="section-title">Payment Information</h2>
                         <div class="info-row">
                             <div class="info-label">Payment Method:</div>
-                            <div class="info-value"><?php echo htmlspecialchars($order['method_payment']); ?></div>
+                            <div class="info-value"><?php echo htmlspecialchars($order['payment_method']); ?></div>
                         </div>
                     </div>
                 </div>
