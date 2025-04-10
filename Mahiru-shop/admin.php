@@ -134,7 +134,8 @@ $top_products_result = $conn->query($top_products_sql);
                                             <td><?php echo date('Y-m-d', strtotime($order['created_at'])); ?></td>
                                             <td>$<?php echo number_format($order['total_price'], 2); ?></td>
                                             <td><?php echo ucfirst($order['status']); ?></td>
-                                            <td><a href="order-details.php?order_id=<?php echo $order['id']; ?>" class="action-btn">View</a></td>
+                                            <td><a href="detail-order.php?id=<?php echo $order['id']; ?>" class="action-btn">View</a></td>
+
                                         </tr>
                                     <?php endwhile; ?>
                                 <?php else: ?>
