@@ -1,13 +1,13 @@
 <?php
 session_start();
 
-// Kiểm tra đăng nhập
+// Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit;
 }
 
-// Kết nối cơ sở dữ liệu
+// Database connection
 $host = 'localhost';
 $dbname = 'mahiru_shop';
 $dbUsername = 'root';
@@ -20,10 +20,10 @@ try {
     die("Connection failed: " . $e->getMessage());
 }
 
-// Lấy user_id từ session
+// Get user_id from session
 $userId = $_SESSION['user_id'];
 
-// Xử lý xóa sản phẩm
+// Handle remove product
 if (isset($_GET['remove'])) {
     $productId = (int)$_GET['remove'];
     $deleteStmt = $conn->prepare("DELETE FROM cart WHERE user_id = :user_id AND product_id = :product_id");
@@ -34,33 +34,59 @@ if (isset($_GET['remove'])) {
     exit;
 }
 
-// Xử lý cập nhật số lượng (đã sửa điều kiện từ 10 lên 99)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_cart'])) {
-    foreach ($_POST['quantity'] as $id => $qty) {
-        $id = (int)$id;
-        $qty = (int)$qty;
-        if ($qty > 0 && $qty <= 99) {  // Đã sửa từ 10 lên 99
+// Handle cart updates (increase, decrease, or manual quantity input)
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['update_cart']) && isset($_POST['quantity'])) {
+        foreach ($_POST['quantity'] as $id => $qty) {
+            $id = (int)$id;
+            $qty = (int)$qty;
+            if ($qty > 0 && $qty <= 99) {
+                $updateStmt = $conn->prepare("UPDATE cart SET quantity = :quantity WHERE user_id = :user_id AND product_id = :product_id");
+                $updateStmt->bindValue(':quantity', $qty, PDO::PARAM_INT);
+                $updateStmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
+                $updateStmt->bindValue(':product_id', $id, PDO::PARAM_INT);
+                $updateStmt->execute();
+            } else {
+                $deleteStmt = $conn->prepare("DELETE FROM cart WHERE user_id = :user_id AND product_id = :product_id");
+                $deleteStmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
+                $deleteStmt->bindValue(':product_id', $id, PDO::PARAM_INT);
+                $deleteStmt->execute();
+            }
+        }
+    } elseif (isset($_POST['action']) && isset($_POST['product_id'])) {
+        $productId = (int)$_POST['product_id'];
+        $action = $_POST['action'];
+        $stmt = $conn->prepare("SELECT quantity FROM cart WHERE user_id = :user_id AND product_id = :product_id");
+        $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
+        $stmt->bindValue(':product_id', $productId, PDO::PARAM_INT);
+        $stmt->execute();
+        $currentQty = $stmt->fetchColumn();
+
+        if ($action === 'increase' && $currentQty < 99) {
+            $newQty = $currentQty + 1;
             $updateStmt = $conn->prepare("UPDATE cart SET quantity = :quantity WHERE user_id = :user_id AND product_id = :product_id");
-            $updateStmt->bindValue(':quantity', $qty, PDO::PARAM_INT);
+            $updateStmt->bindValue(':quantity', $newQty, PDO::PARAM_INT);
             $updateStmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
-            $updateStmt->bindValue(':product_id', $id, PDO::PARAM_INT);
+            $updateStmt->bindValue(':product_id', $productId, PDO::PARAM_INT);
             $updateStmt->execute();
-        } else {
-            $deleteStmt = $conn->prepare("DELETE FROM cart WHERE user_id = :user_id AND product_id = :product_id");
-            $deleteStmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
-            $deleteStmt->bindValue(':product_id', $id, PDO::PARAM_INT);
-            $deleteStmt->execute();
+        } elseif ($action === 'decrease' && $currentQty > 1) {
+            $newQty = $currentQty - 1;
+            $updateStmt = $conn->prepare("UPDATE cart SET quantity = :quantity WHERE user_id = :user_id AND product_id = :product_id");
+            $updateStmt->bindValue(':quantity', $newQty, PDO::PARAM_INT);
+            $updateStmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
+            $updateStmt->bindValue(':product_id', $productId, PDO::PARAM_INT);
+            $updateStmt->execute();
         }
     }
     header("Location: cart.php");
     exit;
 }
 
-// Lấy danh mục từ bảng products
+// Fetch categories
 $categoryQuery = $conn->query("SELECT DISTINCT category FROM products");
 $categories = $categoryQuery->fetchAll(PDO::FETCH_ASSOC);
 
-// Lấy dữ liệu giỏ hàng
+// Fetch cart items
 $stmt = $conn->prepare("
     SELECT c.product_id, c.quantity, p.name, p.price, p.image, p.description 
     FROM cart c 
@@ -71,12 +97,13 @@ $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
 $stmt->execute();
 $cartItems = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Tính tổng tiền
-$total = 0;
+// Calculate totals
+$subtotal = 0;
 $shipping = 5.00;
 foreach ($cartItems as $item) {
-    $total += $item['price'] * $item['quantity'];
+    $subtotal += $item['price'] * $item['quantity'];
 }
+$total = $subtotal + $shipping;
 ?>
 
 <!DOCTYPE html>
@@ -127,14 +154,14 @@ foreach ($cartItems as $item) {
         </div>
         <nav>
             <div class="container">
-            <ul>
-                <li><a href="index_account.php">Home</a></li>
-                <?php foreach ($categories as $cat): ?>
-                    <li><a href="index.php?category=<?php echo htmlspecialchars($cat['category']); ?>">
-                        <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $cat['category']))); ?>
-                    </a></li>
-                <?php endforeach; ?>
-            </ul>
+                <ul>
+                    <li><a href="index_account.php">Home</a></li>
+                    <?php foreach ($categories as $cat): ?>
+                        <li><a href="index.php?category=<?php echo htmlspecialchars($cat['category']); ?>">
+                            <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $cat['category']))); ?>
+                        </a></li>
+                    <?php endforeach; ?>
+                </ul>
             </div>
         </nav>
     </header>
@@ -171,13 +198,21 @@ foreach ($cartItems as $item) {
                                             </div>
                                         </td>
                                         <td class="price" data-price="<?php echo $item['price']; ?>">$<?php echo number_format($item['price'], 2); ?></td>
-                                        <td>
-                                            <div class="quantity-control">
-                                                <button type="button" class="decrease-btn">-</button>
-                                                <input type="number" name="quantity[<?php echo $item['product_id']; ?>]" value="<?php echo $item['quantity']; ?>" min="1" max="99" class="quantity-input" readonly> <!-- Đã sửa max từ 10 lên 99 -->
-                                                <button type="button" class="increase-btn">+</button>
-                                            </div>
-                                        </td>
+                                       <td>
+    <div class="quantity-control">
+        <form method="post" style="display:inline;">
+            <input type="hidden" name="product_id" value="<?php echo $item['product_id']; ?>">
+            <input type="hidden" name="action" value="decrease">
+            <button type="submit" class="decrease-btn">-</button>
+        </form>
+        <input type="number" name="quantity[<?php echo $item['product_id']; ?>]" value="<?php echo $item['quantity']; ?>" min="1" max="99" class="quantity-input">
+        <form method="post" style="display:inline;">
+            <input type="hidden" name="product_id" value="<?php echo $item['product_id']; ?>">
+            <input type="hidden" name="action" value="increase">
+            <button type="submit" class="increase-btn">+</button>
+        </form>
+    </div>
+</td>
                                         <td class="subtotal">$<?php echo number_format($item['price'] * $item['quantity'], 2); ?></td>
                                         <td>
                                             <a href="cart.php?remove=<?php echo $item['product_id']; ?>" class="remove-btn">Remove</a>
@@ -197,7 +232,7 @@ foreach ($cartItems as $item) {
                     <h2>Order Summary</h2>
                     <div class="summary-row">
                         <span>Subtotal:</span>
-                        <span id="subtotal">$<?php echo number_format($total, 2); ?></span>
+                        <span id="subtotal">$<?php echo number_format($subtotal, 2); ?></span>
                     </div>
                     <div class="summary-row">
                         <span>Shipping:</span>
@@ -205,7 +240,7 @@ foreach ($cartItems as $item) {
                     </div>
                     <div class="summary-row total">
                         <span>Total:</span>
-                        <span id="total">$<?php echo number_format($total + $shipping, 2); ?></span>
+                        <span id="total">$<?php echo number_format($total, 2); ?></span>
                     </div>
                     <a href="checkout.php" class="checkout-btn">Proceed to Checkout</a>
                 </div>
@@ -217,31 +252,5 @@ foreach ($cartItems as $item) {
             <p>© Mahiru Shop. We are pleased to serve you.</p>
         </div>
     </footer>
-
-    <script src="./js/cart.js"></script>
-    <script>
-        // Cập nhật JavaScript để phù hợp với giới hạn mới (99)
-        document.querySelectorAll('.increase-btn').forEach(button => {
-            button.addEventListener('click', () => {
-                const input = button.parentElement.querySelector('.quantity-input');
-                let value = parseInt(input.value);
-                if (value < 99) {  // Đã sửa từ 10 lên 99
-                    input.value = value + 1;
-                } else {
-                    alert('Maximum quantity per product is 99');
-                }
-            });
-        });
-
-        document.querySelectorAll('.decrease-btn').forEach(button => {
-            button.addEventListener('click', () => {
-                const input = button.parentElement.querySelector('.quantity-input');
-                let value = parseInt(input.value);
-                if (value > 1) {
-                    input.value = value - 1;
-                }
-            });
-        });
-    </script>
 </body>
 </html>
