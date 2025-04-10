@@ -120,8 +120,8 @@ $conn->close();
                             <div class="form-group">
                                 <label for="product-category">Category</label>
                                 <select id="product-category" name="product-category">
-                                    <option value="gundam" <?php if($product['category'] == 'gundam') echo 'selected'; ?>>Gundam Models</option>
-                                    <option value="kamen rider" <?php if($product['category'] == 'kamen rider') echo 'selected'; ?>>Kamen Rider</option>
+                                    <option value="Gundam" <?php if($product['category'] == 'Gundam') echo 'selected'; ?>>Gundam </option>
+                                    <option value="Kamen Rider" <?php if($product['category'] == 'Kamen Rider') echo 'selected'; ?>>Kamen Rider</option>
                                     <option value="Standee" <?php if($product['category'] == 'Standee') echo 'selected'; ?>>Standee</option>
                                     <option value="Keychain" <?php if($product['category'] == 'Keychain') echo 'selected'; ?>>Keychain</option>
                                     <option value="Plush" <?php if($product['category'] == 'Plush') echo 'selected'; ?>>Plush</option>
