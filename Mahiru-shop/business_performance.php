@@ -40,28 +40,28 @@ $whereClause = "";
 
 // Nếu cả fromDate và toDate đều có
 if (!empty($fromDate) && !empty($toDate)) {
-    $whereClause = " WHERE created_at BETWEEN :fromDate AND :toDate ";
+    $whereClause = " WHERE o.created_at BETWEEN :fromDate AND :toDate ";
     $params[':fromDate'] = $fromDate; // 'YYYY-MM-DD'
     // Muốn tính hết ngày "toDate", thêm 23:59:59
     $params[':toDate']   = $toDate . " 23:59:59";
 } 
 // Nếu chỉ có fromDate
 elseif (!empty($fromDate)) {
-    $whereClause = " WHERE created_at >= :fromDate ";
+    $whereClause = " WHERE o.created_at >= :fromDate ";
     $params[':fromDate'] = $fromDate;
 } 
 // Nếu chỉ có toDate
 elseif (!empty($toDate)) {
-    $whereClause = " WHERE created_at <= :toDate ";
+    $whereClause = " WHERE o.created_at <= :toDate ";
     $params[':toDate']   = $toDate . " 23:59:59";
 }
 
 // ========================
 // Đếm tổng số row (phục vụ phân trang)
 // ========================
-$sqlCount = "SELECT COUNT(*) AS total FROM products $whereClause";
+$sqlCount = "SELECT COUNT(*) AS total FROM products";
 $stmtCount = $conn->prepare($sqlCount);
-$stmtCount->execute($params);
+$stmtCount->execute();
 $totalRow = $stmtCount->fetch(PDO::FETCH_ASSOC)['total'];
 
 // Tính số trang
@@ -71,15 +71,9 @@ $totalPages = ceil($totalRow / $limit);
 // Lấy danh sách products
 // ========================
 $sql = "SELECT * FROM products 
-        $whereClause
         ORDER BY id ASC
         LIMIT :offset, :limit";
 $stmt = $conn->prepare($sql);
-
-// Bind param cho WHERE
-foreach($params as $key => $value) {
-    $stmt->bindValue($key, $value);
-}
 
 // Bind param cho LIMIT
 $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
@@ -92,9 +86,15 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 // Tính các chỉ số cuối trang
 // ========================
 
-// 1) Total Revenue (SUM(price * sold_count))
-$sqlRevenue = "SELECT SUM(price * sold_count) AS total_revenue FROM products";
-$stmtRevenue = $conn->query($sqlRevenue);
+// 1) Total Revenue (SUM(price * quantity) từ order_items, chỉ tính đơn hàng completed)
+$sqlRevenue = "
+    SELECT SUM(oi.price * oi.quantity) AS total_revenue 
+    FROM order_items oi
+    JOIN orders o ON oi.order_id = o.id
+    WHERE o.status = 'completed' $whereClause
+";
+$stmtRevenue = $conn->prepare($sqlRevenue);
+$stmtRevenue->execute($params);
 $totalRevenue = $stmtRevenue->fetch(PDO::FETCH_ASSOC)['total_revenue'];
 if (!$totalRevenue) $totalRevenue = 0;
 
@@ -147,7 +147,6 @@ $leastProduct = $stmtLeast->fetch(PDO::FETCH_ASSOC);
                 <ul>
                     <li><a href="./business_performance.php" class="active">Product Statistics</a></li>
                     <li><a href="./top5customer.php">Top 5 Customer</a></li>
-                    <li><a href="./top5product.php"class="active"> Top 5 Product</a></li>
                 </ul>
             </div>
             <section class="admin-content">
@@ -183,7 +182,7 @@ $leastProduct = $stmtLeast->fetch(PDO::FETCH_ASSOC);
                 </div>
 
                 <!-- Bảng sản phẩm -->
-                                <table class="table-wrapper">
+                <table class="table-wrapper">
                     <thead>
                         <tr>
                             <th>#</th>
@@ -229,7 +228,6 @@ $leastProduct = $stmtLeast->fetch(PDO::FETCH_ASSOC);
                                  >
                                      View
                                  </a>
-
                             </td>
                         </tr>
                         <?php endforeach; ?>
@@ -295,6 +293,7 @@ $leastProduct = $stmtLeast->fetch(PDO::FETCH_ASSOC);
                     </div>
                     <div class="stat-item">
                         <h4>Least-selling Product</h4>
+                        <div class="stat-item">
                         <?php if($leastProduct): ?>
                             <p>
                                 <?php 
