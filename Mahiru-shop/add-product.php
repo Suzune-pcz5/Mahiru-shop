@@ -43,10 +43,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // Chuẩn bị câu lệnh SQL
-    $stmt = $conn->prepare("INSERT INTO products (name, price, category, image) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("sdss", $name, $price, $category, $image_path);
+    $stmt = $conn->prepare("INSERT INTO products (name, description, price, category, image) VALUES (?, ?, ?, ?, ?)");
+    $stmt->bind_param("ssdss", $name, $description, $price, $category, $image_path);
     
-
     if ($stmt->execute()) {
         echo "<script>alert('Sản phẩm đã được thêm thành công!');</script>";
     } else {
@@ -86,7 +85,7 @@ $conn->close();
                     <div class="user-icon">
                         <i data-lucide="user-circle"></i>
                     </div>
-                    <span class="admin-name">Admin</span>
+                    <span class="admin-name">Admin: Hatsu</span>
                     <a href="./loginad.php" class="logout">Log out</a>
                 </div>
             </div>
