@@ -73,8 +73,16 @@ $categories = $categoryQuery->fetchAll(PDO::FETCH_ASSOC);
 // Handle search, filter, and sort
 $searchName = isset($_GET['name']) ? trim($_GET['name']) : '';
 $category = isset($_GET['category']) ? $_GET['category'] : 'all';
-$priceRange = isset($_GET['price']) ? (int)$_GET['price'] : 300;
+$minPrice = isset($_GET['min_price']) ? (int)$_GET['min_price'] : 0;
+$maxPrice = isset($_GET['max_price']) ? (int)$_GET['max_price'] : 300;
 $sort = isset($_GET['sort']) ? $_GET['sort'] : 'relevance';
+
+// Validate price range
+if ($minPrice > $maxPrice) {
+    $temp = $minPrice;
+    $minPrice = $maxPrice;
+    $maxPrice = $temp;
+}
 
 // Pagination
 $limit = 9;
@@ -82,8 +90,11 @@ $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $offset = ($page - 1) * $limit;
 
 // Count total products
-$countSql = "SELECT COUNT(*) FROM products WHERE price <= :price";
-$params = [':price' => $priceRange];
+$countSql = "SELECT COUNT(*) FROM products WHERE price BETWEEN :min_price AND :max_price";
+$params = [
+    ':min_price' => $minPrice,
+    ':max_price' => $maxPrice
+];
 if (!empty($searchName)) {
     $countSql .= " AND name LIKE :name";
     $params[':name'] = "%$searchName%";
@@ -99,8 +110,11 @@ $totalProducts = $countStmt->fetchColumn();
 $totalPages = ceil($totalProducts / $limit);
 
 // Build product query
-$sql = "SELECT * FROM products WHERE price <= :price";
-$params = [':price' => $priceRange];
+$sql = "SELECT * FROM products WHERE price BETWEEN :min_price AND :max_price";
+$params = [
+    ':min_price' => $minPrice,
+    ':max_price' => $maxPrice
+];
 if (!empty($searchName)) {
     $sql .= " AND name LIKE :name";
     $params[':name'] = "%$searchName%";
@@ -144,12 +158,13 @@ $stmt->execute();
 $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Function to build URL with current parameters
-function buildSortUrl($sortOption, $searchName, $category, $priceRange, $page) {
+function buildSortUrl($sortOption, $searchName, $category, $minPrice, $maxPrice, $page) {
     $params = [
         'sort' => $sortOption,
         'name' => urlencode($searchName),
         'category' => urlencode($category),
-        'price' => $priceRange,
+        'min_price' => $minPrice,
+        'max_price' => $maxPrice,
         'page' => $page
     ];
     return 'search_account.php?' . http_build_query($params);
@@ -184,6 +199,15 @@ function buildSortUrl($sortOption, $searchName, $category, $priceRange, $page) {
         }
         .show {
             display: block;
+        }
+        .price-range-inputs {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .price-range-inputs input {
+            width: 80px;
+            padding: 5px;
         }
     </style>
 </head>
@@ -232,7 +256,7 @@ function buildSortUrl($sortOption, $searchName, $category, $priceRange, $page) {
             <a href="index_account.php" class="logo-link"><h1>MAHIRU<span>.</span></h1></a>
         </div>
         <div class="search-bar">
-            <form action="search.php" method="GET">
+            <form action="search_account.php" method="GET">
                 <input type="text" name="name" placeholder="Search here" value="<?php echo htmlspecialchars($searchName); ?>" />
                 <button type="submit" class="search-button">Search</button>
             </form>
@@ -273,13 +297,12 @@ function buildSortUrl($sortOption, $searchName, $category, $priceRange, $page) {
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <h3>Price:</h3>
                     <div class="filter-price">
-                        <label for="priceRange">Range: <span id="priceOutput"><?php echo $priceRange; ?></span></label>
-                        <div class="range-container custom-range">
-                            <div class="range-label">0</div>
-                            <input type="range" id="priceRange" name="price" min="0" max="300" value="<?php echo $priceRange; ?>" class="filter-input">
-                            <div class="range-label">300</div>
+                        <h3>Price:</h3>
+                        <div class="price-range-inputs">
+                            <input type="number" name="min_price" min="0" max="300" placeholder="Min" value="...">
+                            <span>to</span>
+                            <input type="number" name="max_price" min="0" max="300" placeholder="Max" value="...">
                         </div>
                     </div>
                     <button type="submit" class="filter-button">Search</button>
@@ -289,15 +312,15 @@ function buildSortUrl($sortOption, $searchName, $category, $priceRange, $page) {
             <section class="product-grid">
                 <div class="filter-box">
                     <span class="sort-label">Sort by:</span>
-                    <a class="sort-label" href="<?php echo buildSortUrl('relevance', $searchName, $category, $priceRange, $page); ?>"><button class="filter-btn">Relevance</button></a>
-                    <a class="sort-label" href="<?php echo buildSortUrl('newest', $searchName, $category, $priceRange, $page); ?>"><button class="filter-btn">Newest</button></a>
-                    <a class="sort-label" href="<?php echo buildSortUrl('best_selling', $searchName, $category, $priceRange, $page); ?>"><button class="filter-btn">Best Selling</button></a>
+                    <a class="sort-label" href="<?php echo buildSortUrl('relevance', $searchName, $category, $minPrice, $maxPrice, $page); ?>"><button class="filter-btn">Relevance</button></a>
+                    <a class="sort-label" href="<?php echo buildSortUrl('newest', $searchName, $category, $minPrice, $maxPrice, $page); ?>"><button class="filter-btn">Newest</button></a>
+                    <a class="sort-label" href="<?php echo buildSortUrl('best_selling', $searchName, $category, $minPrice, $maxPrice, $page); ?>"><button class="filter-btn">Best Selling</button></a>
                     <div class="filter-option">
                         <label class="price-btn" for="price-toggle">Price</label>
                         <input type="checkbox" id="price-toggle" class="price-toggle">
                         <div class="price-dropdown">
-                            <a href="<?php echo buildSortUrl('low_to_high', $searchName, $category, $priceRange, $page); ?>" class="price-option">Low to High</a>
-                            <a href="<?php echo buildSortUrl('high_to_low', $searchName, $category, $priceRange, $page); ?>" class="price-option">High to Low</a>
+                            <a href="<?php echo buildSortUrl('low_to_high', $searchName, $category, $minPrice, $maxPrice, $page); ?>" class="price-option">Low to High</a>
+                            <a href="<?php echo buildSortUrl('high_to_low', $searchName, $category, $minPrice, $maxPrice, $page); ?>" class="price-option">High to Low</a>
                         </div>
                     </div>
                 </div>
@@ -315,7 +338,7 @@ function buildSortUrl($sortOption, $searchName, $category, $priceRange, $page) {
                                     <h3><?php echo htmlspecialchars($product['name']); ?></h3>
                                     <p><?php echo htmlspecialchars($product['description']); ?></p>
                                     <span class="price">$<?php echo htmlspecialchars($product['price']); ?></span>
-                                    <a href="search_account.php?add_to_cart=<?php echo $product['id']; ?>&name=<?php echo urlencode($searchName); ?>&category=<?php echo urlencode($category); ?>&price=<?php echo $priceRange; ?>&sort=<?php echo $sort; ?>&page=<?php echo $page; ?>" class="btn">Add to Cart</a>
+                                    <a href="search_account.php?add_to_cart=<?php echo $product['id']; ?>&name=<?php echo urlencode($searchName); ?>&category=<?php echo urlencode($category); ?>&min_price=<?php echo $minPrice; ?>&max_price=<?php echo $maxPrice; ?>&sort=<?php echo $sort; ?>&page=<?php echo $page; ?>" class="btn">Add to Cart</a>
                                 </div>
                             <?php endforeach; ?>
                         </div>
@@ -328,13 +351,13 @@ function buildSortUrl($sortOption, $searchName, $category, $priceRange, $page) {
 
         <div class="pagination">
             <?php if ($page > 1): ?>
-                <a href="search_account.php?page=<?php echo $page - 1; ?>&name=<?php echo urlencode($searchName); ?>&category=<?php echo urlencode($category); ?>&price=<?php echo $priceRange; ?>&sort=<?php echo $sort; ?>">« Previous</a>
+                <a href="search_account.php?page=<?php echo $page - 1; ?>&name=<?php echo urlencode($searchName); ?>&category=<?php echo urlencode($category); ?>&min_price=<?php echo $minPrice; ?>&max_price=<?php echo $maxPrice; ?>&sort=<?php echo $sort; ?>">« Previous</a>
             <?php endif; ?>
             <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                <a href="search_account.php?page=<?php echo $i; ?>&name=<?php echo urlencode($searchName); ?>&category=<?php echo urlencode($category); ?>&price=<?php echo $priceRange; ?>&sort=<?php echo $sort; ?>" class="<?php echo ($i === $page) ? 'active' : ''; ?>"><?php echo $i; ?></a>
+                <a href="search_account.php?page=<?php echo $i; ?>&name=<?php echo urlencode($searchName); ?>&category=<?php echo urlencode($category); ?>&min_price=<?php echo $minPrice; ?>&max_price=<?php echo $maxPrice; ?>&sort=<?php echo $sort; ?>" class="<?php echo ($i === $page) ? 'active' : ''; ?>"><?php echo $i; ?></a>
             <?php endfor; ?>
             <?php if ($page < $totalPages): ?>
-                <a href="search_account.php?page=<?php echo $page + 1; ?>&name=<?php echo urlencode($searchName); ?>&category=<?php echo urlencode($category); ?>&price=<?php echo $priceRange; ?>&sort=<?php echo $sort; ?>">Next »</a>
+                <a href="search_account.php?page=<?php echo $page + 1; ?>&name=<?php echo urlencode($searchName); ?>&category=<?php echo urlencode($category); ?>&min_price=<?php echo $minPrice; ?>&max_price=<?php echo $maxPrice; ?>&sort=<?php echo $sort; ?>">Next »</a>
             <?php endif; ?>
         </div>
     </main>
@@ -365,16 +388,6 @@ function buildSortUrl($sortOption, $searchName, $category, $priceRange, $page) {
                     }, 3000);
                 }
             });
-
-            // Price range slider
-            const priceRange = document.getElementById('priceRange');
-            const priceOutput = document.getElementById('priceOutput');
-            if (priceRange && priceOutput) {
-                priceOutput.textContent = priceRange.value;
-                priceRange.addEventListener('input', function() {
-                    priceOutput.textContent = this.value;
-                });
-            }
         });
     </script>
 </body>
