@@ -647,13 +647,11 @@ footer {
   padding: 15px;
   background-color: #fff;
   border-radius: 8px;
-  margin-left: 0px;
   border: 1px solid #ddd;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transition: box-shadow 0.3s ease, border-color 0.3s ease;
-  max-height: 58.25vh;
-  position: relative;
-  margin-top: 129px;
+  /* Thêm 2 dòng sau để sidebar co lại vừa đủ chiều cao */
+  height: fit-content; /* Tự động co theo nội dung */
+  align-self: flex-start; /* Ngăn sidebar kéo dài theo main content */
 }
 
 .filter-sidebar:hover {
