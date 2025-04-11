@@ -36,11 +36,19 @@ $categories = $categoryQuery->fetchAll(PDO::FETCH_ASSOC);
 // ========== XỬ LÝ TÌM KIẾM, LỌC SẢN PHẨM & PHÂN TRANG ==========
 $searchName = $_GET['name'] ?? '';
 $category   = $_GET['category'] ?? 'all';
-$priceRange = $_GET['price'] ?? '9999999';
+$minPrice   = isset($_GET['min_price']) ? (int)$_GET['min_price'] : 0;
+$maxPrice   = isset($_GET['max_price']) ? (int)$_GET['max_price'] : 300;
 
 $limit = 9;
-$page = isset($_GET['p']) ? (int)$_GET['p'] : 1;
+$page = isset($_GET['p']) ? max(1, (int)$_GET['p']) : 1;
 $offset = ($page - 1) * $limit;
+
+// Xử lý nếu min_price > max_price
+if ($minPrice > $maxPrice) {
+    $temp = $minPrice;
+    $minPrice = $maxPrice;
+    $maxPrice = $temp;
+}
 
 $whereClauses = [];
 $params = [];
@@ -53,29 +61,28 @@ if ($category !== 'all') {
     $whereClauses[] = "category = :category";
     $params[':category'] = $category;
 }
-if (!empty($priceRange)) {
-    $whereClauses[] = "price <= :price";
-    $params[':price'] = $priceRange;
-}
+// Lọc theo khoảng giá
+$whereClauses[] = "price BETWEEN :min_price AND :max_price";
+$params[':min_price'] = $minPrice;
+$params[':max_price'] = $maxPrice;
 
 $whereSql = !empty($whereClauses) ? "WHERE " . implode(" AND ", $whereClauses) : "";
 
 $productQuery = $conn->prepare("SELECT * FROM products $whereSql LIMIT :limit OFFSET :offset");
 foreach ($params as $key => $value) {
-    if ($key === ':limit' || $key === ':offset') {
-        $productQuery->bindValue($key, (int)$value, PDO::PARAM_INT);
-    } else {
-        $productQuery->bindValue($key, $value);
-    }
+    $type = in_array($key, [':min_price', ':max_price', ':limit', ':offset']) ? PDO::PARAM_INT : PDO::PARAM_STR;
+    $productQuery->bindValue($key, $value, $type);
 }
 $productQuery->bindValue(':limit', $limit, PDO::PARAM_INT);
 $productQuery->bindValue(':offset', $offset, PDO::PARAM_INT);
 $productQuery->execute();
 $products = $productQuery->fetchAll(PDO::FETCH_ASSOC);
+
 // Tính tổng số sản phẩm sau khi lọc
 $totalQuery = $conn->prepare("SELECT COUNT(*) FROM products $whereSql");
 foreach ($params as $key => $value) {
-    $totalQuery->bindValue($key, $value);
+    $type = in_array($key, [':min_price', ':max_price']) ? PDO::PARAM_INT : PDO::PARAM_STR;
+    $totalQuery->bindValue($key, $value, $type);
 }
 $totalQuery->execute();
 $totalProducts = $totalQuery->fetchColumn();
@@ -84,6 +91,7 @@ $totalProducts = $totalQuery->fetchColumn();
 $totalPages = ceil($totalProducts / $limit);
 
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -100,7 +108,7 @@ $totalPages = ceil($totalProducts / $limit);
             <div class="contact-info">
                 <span><i class="fas fa-phone"></i> 012345678</span>
                 <span><i class="fas fa-envelope"></i> mahiru@gmail.com</span>
-                <span><i class="fas fa-map-marker-alt"></i>1104 Wall Street</span>
+                <span><i class="fas fa-map-marker-alt"></i> 1104 Wall Street</span>
             </div>
             <div class="user-actions">
                 <a class="login-link">
@@ -123,7 +131,8 @@ $totalPages = ceil($totalProducts / $limit);
                 <form action="search.php" method="GET">
                     <input type="text" name="name" placeholder="Search here" value="<?php echo htmlspecialchars($searchName); ?>" />
                     <input type="hidden" name="category" value="<?php echo htmlspecialchars($category); ?>" />
-                    <input type="hidden" name="price" value="<?php echo htmlspecialchars($priceRange); ?>" />
+                    <input type="hidden" name="min_price" value="<?php echo htmlspecialchars($minPrice); ?>" />
+                    <input type="hidden" name="max_price" value="<?php echo htmlspecialchars($maxPrice); ?>" />
                     <button type="submit" class="search-button">Search</button>
                 </form>
             </div>
@@ -150,18 +159,17 @@ $totalPages = ceil($totalProducts / $limit);
             <form action="index.php" method="GET">
                 <h3>Name:</h3>
                 <div class="filter-name">
-                    <input type="text" name="name" placeholder="Enter product name" class="filter-input" value="">
+                    <input type="text" name="name" placeholder="Enter product name" class="filter-input" value="<?php echo htmlspecialchars($searchName); ?>">
                 </div>
                 <h3>Category:</h3>
                 <div class="filter-category">
                     <select name="category" class="filter-select">
-                        <option value="all" selected="">All Categories</option>
-                        <option value="Figure">Figure</option>
-                        <option value="Kamen Rider">Kamen Rider</option>
-                        <option value="Plush">Plush</option>
-                        <option value="Gundam">Gundam</option>
-                        <option value="Standee">Standee</option>
-                        <option value="Keychain">Keychain</option>
+                        <option value="all" <?php echo $category === 'all' ? 'selected' : ''; ?>>All Categories</option>
+                        <?php foreach ($categories as $cat): ?>
+                            <option value="<?php echo htmlspecialchars($cat['category']); ?>" <?php echo $category === $cat['category'] ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $cat['category']))); ?>
+                            </option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="filter-price">
@@ -202,13 +210,13 @@ $totalPages = ceil($totalProducts / $limit);
     </div>
     <div class="pagination">
         <?php if ($page > 1): ?>
-            <a href="index.php?p=<?php echo $page - 1; ?>&name=<?php echo urlencode($searchName); ?>&category=<?php echo urlencode($category); ?>&price=<?php echo $priceRange; ?>">« Previous</a>
+            <a href="index.php?p=<?php echo $page - 1; ?>&name=<?php echo urlencode($searchName); ?>&category=<?php echo urlencode($category); ?>&min_price=<?php echo $minPrice; ?>&max_price=<?php echo $maxPrice; ?>">« Previous</a>
         <?php endif; ?>
         <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-            <a href="index.php?p=<?php echo $i; ?>&name=<?php echo urlencode($searchName); ?>&category=<?php echo urlencode($category); ?>&price=<?php echo $priceRange; ?>" class="<?php echo ($i === $page) ? 'active' : ''; ?>"><?php echo $i; ?></a>
+            <a href="index.php?p=<?php echo $i; ?>&name=<?php echo urlencode($searchName); ?>&category=<?php echo urlencode($category); ?>&min_price=<?php echo $minPrice; ?>&max_price=<?php echo $maxPrice; ?>" class="<?php echo ($i === $page) ? 'active' : ''; ?>"><?php echo $i; ?></a>
         <?php endfor; ?>
         <?php if ($page < $totalPages): ?>
-            <a href="index.php?p=<?php echo $page + 1; ?>&name=<?php echo urlencode($searchName); ?>&category=<?php echo urlencode($category); ?>&price=<?php echo $priceRange; ?>">Next »</a>
+            <a href="index.php?p=<?php echo $page + 1; ?>&name=<?php echo urlencode($searchName); ?>&category=<?php echo urlencode($category); ?>&min_price=<?php echo $minPrice; ?>&max_price=<?php echo $maxPrice; ?>">Next »</a>
         <?php endif; ?>
     </div>
 </main>
@@ -219,13 +227,5 @@ $totalPages = ceil($totalProducts / $limit);
     </div>
 </footer>
 
-<script>
-    const priceRange = document.getElementById('priceRange');
-    const priceOutput = document.getElementById('priceOutput');
-    priceOutput.textContent = priceRange.value;
-    priceRange.addEventListener('input', function() {
-        priceOutput.textContent = priceRange.value;
-    });
-</script>
 </body>
 </html>
