@@ -166,18 +166,13 @@ $totalPages = ceil($totalProducts / $limit);
                 </div>
                 <h3>Price:</h3>
                 <div class="filter-price">
-                    <label for="priceRange">Range:</label>
-                    <div class="range-container custom-range">
-                        <div class="range-label">0</div>
-                        <input type="range" id="priceRange" name="price" min="0" max="300"
-                            value="<?php echo isset($_GET['price']) ? htmlspecialchars($_GET['price']) : '300'; ?>" class="filter-input">
-                        <div class="range-label">300</div>
+                        <h3>Price:</h3>
+                        <div class="price-range-inputs">
+                            <input type="number" name="min_price" min="0" max="300" placeholder="Min" value="...">
+                            <span>to</span>
+                            <input type="number" name="max_price" min="0" max="300" placeholder="Max" value="...">
+                        </div>
                     </div>
-                    <!-- Hiển thị giá trị hiện tại -->
-                    <div class="price-value" style="margin-top: 5px;">
-                        Current Price: $<span id="priceOutput"><?php echo isset($_GET['price']) ? htmlspecialchars($_GET['price']) : '300'; ?></span>
-                    </div>
-                </div>
                 <button type="submit" class="filter-button" style="margin-top: 10px">Search</button>
             </form>
         </div>
