@@ -168,9 +168,9 @@ $totalPages = ceil($totalProducts / $limit);
                 <div class="filter-price">
                         <h3>Price:</h3>
                         <div class="price-range-inputs">
-                            <input type="number" name="min_price" min="0" max="300" placeholder="Min" value="...">
+                            <input type="number" name="min_price" min="0" max="300" placeholder="Min" value="<?php echo htmlspecialchars($minPrice); ?>">
                             <span>to</span>
-                            <input type="number" name="max_price" min="0" max="300" placeholder="Max" value="...">
+                            <input type="number" name="max_price" min="0" max="300" placeholder="Max" value="<?php echo htmlspecialchars($maxPrice); ?>">
                         </div>
                     </div>
                 <button type="submit" class="filter-button" style="margin-top: 10px">Search</button>
