@@ -545,15 +545,16 @@ footer {
 }
 
 .filter-sidebar {
-    width: 250px;
-    padding: 15px;
-    background-color: #fff;
-    border-radius: 8px;
-    border: 1px solid #ddd;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    /* Thêm 2 dòng sau để sidebar co lại vừa đủ chiều cao */
-    height: fit-content; /* Tự động co theo nội dung */
-    align-self: flex-start; /* Ngăn sidebar kéo dài theo main content */
+  width: 250px;
+  padding: 15px;
+  background-color: #fafafa;
+  border-radius: 8px;
+  margin-left: 0px;
+  border: 1px solid #ddd;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  max-height: 58.25vh;
+  position: relative;
 }
 
 .filter-sidebar:hover {
@@ -564,15 +565,6 @@ footer {
 .filter-sidebar h3 {
   font-size: 1.5rem;
   margin-bottom: 15px;
-}
-
-.filter-price input[type="range"] {
-  width: 100%;
-}
-
-.filter-price p {
-  font-size: 1rem;
-  color: #333;
 }
 
 .search-results h1 {
@@ -593,17 +585,6 @@ footer {
   margin-bottom: 15px;
   border: 1px solid #ccc;
   border-radius: 4px;
-}
-
-.filter-price label {
-  display: block;
-  margin-bottom: 5px;
-}
-
-.filter-price p {
-  font-size: 14px;
-  margin-top: 10px;
-  color: #666;
 }
 
 .filter-button {
@@ -734,4 +715,8 @@ footer {
 .price-range-inputs span {
   position: relative;
   left: 13px;
+}
+.filter-price h3 {
+  font-size: 18px; /* Giống với .filter-sidebar h3 */
+  margin-bottom: 15px;
 }
