@@ -223,16 +223,12 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <h3>Price:</h3>
                     <div class="filter-price">
-                        <label for="priceRange">Range:</label>
-                        <div class="range-container custom-range">
-                            <div class="range-label">0</div>
-                            <input type="range" id="priceRange" name="price" min="0" max="300" value="<?php echo htmlspecialchars($priceRange === '99999999' ? 300 : $priceRange); ?>" class="filter-input">
-                            <div class="range-label">300</div>
-                        </div>
-                        <div class="price-value" style="margin-top: 5px;">
-                            Current Price: $<span id="priceOutput"><?php echo htmlspecialchars($priceRange === '99999999' ? 300 : $priceRange); ?></span>
+                        <h3>Price:</h3>
+                        <div class="price-range-inputs">
+                            <input type="number" name="min_price" min="0" max="300" placeholder="Min" value="...">
+                            <span>to</span>
+                            <input type="number" name="max_price" min="0" max="300" placeholder="Max" value="...">
                         </div>
                     </div>
                     <button type="submit" class="filter-button" style="margin-top: 10px">Search</button>
