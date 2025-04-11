@@ -187,8 +187,10 @@ main .container {
 
 .price-range-inputs {
   display: flex;
-  gap: 10px;
+  align-items: center;
+  justify-content: space-between; /* Đẩy các phần tử ra hai bên */
   margin-top: 10px;
+  width: 100%; /* Đảm bảo chiếm toàn bộ chiều rộng */
 }
 
 .price-range-inputs input {
@@ -206,7 +208,7 @@ main .container {
   font-size: 16px;
   cursor: pointer;
   text-align: center;
-  margin-top: 30px;
+  margin-top: 10px;
 }
 
 .filter-button:hover {
@@ -545,25 +547,78 @@ footer {
     margin-bottom: 10px;
   }
 }
-/* Filter Price Styles */
-.filter-price {
+/* Filter Sidebar Styles (Replaced from styles.css) */
+.filter-sidebar {
+  width: 250px;
+  padding: 15px;
+  background-color: #fafafa;
+  border-radius: 8px;
+  margin-left: 0px;
+  border: 1px solid #ddd;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  max-height: 58.25vh;
+  position: relative;
+  height: fit-content;
+  align-self: flex-start;
+}
+
+.filter-sidebar:hover {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  border-color: #ccc;
+}
+
+.filter-sidebar h3 {
+  font-size: 18px;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.filter-input,
+.filter-select {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.filter-button {
+  width: 100%;
+  padding: 13.5px;
+  background-color: #d10024;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  font-size: 16px;
+  cursor: pointer;
+  text-align: center;
+  margin-top: 30px;
+}
+
+.filter-button:hover {
+  background-color: #ff1a3e;
+}
+
+.filter-name {
   margin-bottom: 20px;
 }
 
-.filter-price h3 {
-  font-size: 1.5rem;
-  margin-bottom: 15px;
+.filter-category {
+  margin-bottom: 20px;
 }
 
+/* Price Range Inputs */
 .price-range-inputs {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 5px;
   margin-top: 10px;
 }
 
 .price-range-inputs input {
   width: 80px;
+  height: 36px;
   padding: 8px;
   border: 1px solid #ccc;
   border-radius: 4px;
@@ -579,55 +634,29 @@ footer {
 .price-range-inputs span {
   color: #666;
   font-size: 14px;
-}
-
-/* For the price range slider (if you want to add one later) */
-.price-slider {
-  width: 100%;
-  margin-top: 15px;
-}
-
-.price-slider .range-slider {
-  height: 5px;
-  background: #ddd;
-  border-radius: 5px;
-  margin-bottom: 15px;
-}
-
-.price-slider .range-slider .thumb {
-  width: 15px;
-  height: 15px;
-  background: #d10024;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-.price-slider .range-slider .thumb.active {
-  box-shadow: 0 0 0 5px rgba(209, 0, 36, 0.2);
+  margin: 0 3px;
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .price-range-inputs {
-    flex-direction: column;
-    align-items: flex-start;
+  .filter-sidebar {
+    width: 100%;
+    margin-top: 20px;
+    max-height: none;
   }
 
-  .price-range-inputs span {
-    display: none;
+  .price-range-inputs {
+    flex-direction: row;
+    align-items: center;
   }
 
   .price-range-inputs input {
-    width: 100%;
+    width: 70px;
   }
 }
-/* Thêm vào search.css */
-.price-range-inputs input[name="max_price"] {
-  margin-left: 30px;
-  position: relative;
-  left: -5px;
-}
-.price-range-inputs span {
-  position: relative;
-  left: 13px;
+
+@media (max-width: 576px) {
+  .price-range-inputs input {
+    width: 60px;
+  }
 }
