@@ -164,7 +164,6 @@ $totalPages = ceil($totalProducts / $limit);
                         <option value="Keychain">Keychain</option>
                     </select>
                 </div>
-                <h3>Price:</h3>
                 <div class="filter-price">
                     <h3>Price:</h3>
                     <div class="price-range-inputs">
