@@ -21,20 +21,23 @@ if ($id <= 0) {
 }
 
 // Truy vấn sản phẩm từ database
-$sql = "SELECT * FROM products WHERE id = $id";
-$result = $conn->query($sql);
+$stmt = $conn->prepare("SELECT * FROM products WHERE id = ?");
+$stmt->bind_param("i", $id);
+$stmt->execute();
+$result = $stmt->get_result();
 $product = $result->fetch_assoc();
 
 if (!$product) {
-    echo "<script>alert('Sản phẩm không tồn tại!'); window.location='product-management.php';</script>";
+    echo "<script>alert('Product doesn't exist!'); window.location='product-management.php';</script>";
     exit();
 }
 
+// Xử lý cập nhật sản phẩm
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["update"])) {
-    $name = $_POST["product-name"];
-    $description = $_POST["product-description"];
-    $price = $_POST["product-price"];
-    $category = $_POST["product-category"];
+    $name = $conn->real_escape_string($_POST["product-name"]);
+    $description = $conn->real_escape_string($_POST["product-description"]);
+    $price = (float)$_POST["product-price"];
+    $category = $conn->real_escape_string($_POST["product-category"]);
     $image = $product['image']; // Giữ nguyên ảnh cũ nếu không cập nhật
 
     if (!empty($_FILES["product-image"]["name"])) {
@@ -45,22 +48,48 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["update"])) {
     }
 
     // Cập nhật dữ liệu vào database
-    $update_sql = "UPDATE products SET name='$name', description='$description', price='$price', category='$category', image='$image' WHERE id=$id";
+    $update_stmt = $conn->prepare("UPDATE products SET name = ?, description = ?, price = ?, category = ?, image = ? WHERE id = ?");
+    $update_stmt->bind_param("ssdssi", $name, $description, $price, $category, $image, $id);
     
-    if ($conn->query($update_sql) === TRUE) {
-        echo "<script>alert('Cập nhật sản phẩm thành công!'); window.location='product-management.php';</script>";
+    if ($update_stmt->execute()) {
+        echo "<script>alert('Product updated successfully!'); window.location='product-management.php';</script>";
     } else {
         echo "Lỗi: " . $conn->error;
     }
+    $update_stmt->close();
 }
 
 // Xử lý xóa sản phẩm
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["delete"])) {
-    $delete_sql = "DELETE FROM products WHERE id=$id";
-    if ($conn->query($delete_sql) === TRUE) {
-        echo "<script>alert('Xóa sản phẩm thành công!'); window.location='product-management.php';</script>";
+    // Kiểm tra xem sản phẩm có trong đơn hàng nào không
+    $check_stmt = $conn->prepare("SELECT COUNT(*) AS total FROM order_items WHERE product_id = ?");
+    $check_stmt->bind_param("i", $id);
+    $check_stmt->execute();
+    $check_result = $check_stmt->get_result();
+    $row = $check_result->fetch_assoc();
+    $order_count = $row['total'];
+    $check_stmt->close();
+
+    if ($order_count == 0) {
+        // Trường hợp 1: Sản phẩm không có trong đơn hàng → Xóa sản phẩm
+        $delete_stmt = $conn->prepare("DELETE FROM products WHERE id = ?");
+        $delete_stmt->bind_param("i", $id);
+        if ($delete_stmt->execute()) {
+            echo "<script>alert('Product deleted successfully!'); window.location='product-management.php';</script>";
+        } else {
+            echo "Lỗi: " . $conn->error;
+        }
+        $delete_stmt->close();
     } else {
-        echo "Lỗi: " . $conn->error;
+        // Trường hợp 2: Sản phẩm có trong đơn hàng → Ẩn sản phẩm
+        $hide_stmt = $conn->prepare("UPDATE products SET is_hidden = 1 WHERE id = ?");
+        $hide_stmt->bind_param("i", $id);
+        if ($hide_stmt->execute()) {
+            echo "<script>alert('Product deleted successfully!'); window.location='product-management.php';</script>";
+        } else {
+            echo "Lỗi: " . $conn->error;
+        }
+        $hide_stmt->close();
     }
 }
 
@@ -147,7 +176,7 @@ $conn->close();
 
         <footer>
             <div class="container">
-                <p>&copy; Mahiru Shop. We are pleased to serve you.</p>
+                <p>© Mahiru Shop. We are pleased to serve you.</p>
             </div>
         </footer>
     </div>
