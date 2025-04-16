@@ -51,8 +51,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validate data
     if (empty($username) || empty($email) || empty($address) || empty($phone)) {
         $error = 'Please fill in all required fields (except password if you don\'t want to change it)';
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $error = 'Invalid email format';
     } else {
         try {
             // If new password entered
@@ -133,7 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="contact-info">
                     <span><i class="fas fa-phone"></i> 012345678</span>
                     <span><i class="fas fa-envelope"></i> mahiru@gmail.com</span>
-                    <span><i class="fas fa-map-marker-alt"></i>1104 Wall Street</span>
+                    <span><i class="fas fa-map-marker-alt"></i> 1104 Wall Street</span>
                 </div>
                 <div class="user-actions">
                     <?php if (isset($_SESSION['user_id'])): ?>
@@ -147,19 +145,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <?php if (isset($_SESSION['user_role']) && strtolower($_SESSION['user_role']) === 'admin'): ?>
                                 <a href="edit.php" class="login-option">Edit</a>
                             <?php else: ?>
-                                <a href="order_history.php" class="login-option">Order history</a>
+                                <a href="order_history.php" class="login-option">Order History</a>
                                 <a href="edit_profile.php" class="login-option">Edit Profile</a>
                             <?php endif; ?>
-                            <a href="logout.php" class="login-option">Log out</a>
+                            <a href="logout.php" class="login-option">Log Out</a>
                         </div>
                     <?php else: ?>
                         <a class="login-link">
                             <i class="fas fa-user"></i>
-                            <span class="name">Login/Sign up</span>
+                            <span class="name">Login/Sign Up</span>
                         </a>
                         <div class="login-dropdown">
                             <a href="login.php" class="login-option">Login</a>
-                            <a href="sign_up.php" class="login-option">Sign up</a>
+                            <a href="sign_up.php" class="login-option">Sign Up</a>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -216,12 +214,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             <div class="form-group">
                 <label for="email">Email:</label>
-                <input type="email" id="email" name="email" class="form-control" 
+                <input type="text" id="email" name="email" class="form-control" 
                        value="<?php echo htmlspecialchars($user['email'] ?? ''); ?>" required>
             </div>
             
             <div class="form-group password-toggle">
-                <label for="password">New password (leave blank to keep current):</label>
+                <label for="password">New Password (leave blank to keep current):</label>
                 <input type="password" id="password" name="password" class="form-control">
                 <i class="fas fa-eye toggle-icon" onclick="togglePassword()"></i>
             </div>
