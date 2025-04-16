@@ -1,41 +1,41 @@
 <?php
 session_start();
 
-// Kiểm tra đăng nhập
-if (!isset($_SESSION['user_id'])) {
+// Check if the user is logged in
+if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
 
-// Kết nối cơ sở dữ liệu
+// Database connection
 $host = 'localhost';
 $dbname = 'mahiru_shop';
 $dbUsername = 'root';
 $dbPassword = '';
 
 try {
-    $conn = new PDO("mysql:host=$host;dbname=$dbname", $dbUsername, $dbPassword);
+    $conn = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $dbUsername, $dbPassword);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (PDOException $e) {
     die("Connection failed: " . $e->getMessage());
 }
 
-// Lấy user_id từ session
+// Get user_id from session
 $userId = $_SESSION['user_id'];
 
-// Lấy thông tin người dùng từ bảng users
+// Fetch user information from the database
 $userStmt = $conn->prepare("SELECT username, email, address, phone FROM users WHERE id = :user_id");
 $userStmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
 $userStmt->execute();
 $userInfo = $userStmt->fetch(PDO::FETCH_ASSOC);
 
-// Gán giá trị mặc định từ thông tin người dùng
+// Assign default values from user info
 $fullName = $userInfo['username'] ?? '';
 $email = $userInfo['email'] ?? '';
 $streetAddress = $userInfo['address'] ?? '';
 $phoneNumber = $userInfo['phone'] ?? '';
 
-// Lấy dữ liệu giỏ hàng từ cơ sở dữ liệu
+// Fetch cart items from the database
 $stmt = $conn->prepare("
     SELECT c.product_id, c.quantity, p.name, p.price, p.image 
     FROM cart c 
@@ -46,22 +46,22 @@ $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
 $stmt->execute();
 $cartItems = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// ========== LẤY DANH MỤC TỪ BẢNG products ==========
-$categoryQuery = $conn->query("SELECT DISTINCT category FROM products");
-$categories = $categoryQuery->fetchAll(PDO::FETCH_ASSOC);
-
-// Kiểm tra giỏ hàng
+// Redirect if cart is empty
 if (empty($cartItems)) {
     header("Location: cart.php");
     exit();
 }
 
-// Tính tổng tiền và phí vận chuyển
+// Calculate total and shipping cost
 $total = 0;
 $shipping = 5.00;
 foreach ($cartItems as $item) {
     $total += $item['price'] * $item['quantity'];
 }
+
+// Fetch categories for navigation
+$categoryQuery = $conn->query("SELECT DISTINCT category FROM products");
+$categories = $categoryQuery->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -86,7 +86,7 @@ foreach ($cartItems as $item) {
                 </div>
                 <div class="user-actions">
                     <i class="fas fa-user"></i>
-                    <span class="name"><?php echo htmlspecialchars($userInfo['username']); ?></span>
+                    <span class="name"><?php echo htmlspecialchars($userInfo['username'] ?? 'Guest'); ?></span>
                     <div class="login-dropdown">
                         <a href="order_history.php" class="login-option">Order History</a>
                         <a href="edit_profile.php" class="login-option">Edit Profile</a>
@@ -113,14 +113,14 @@ foreach ($cartItems as $item) {
         </div>
         <nav class="category-nav">
             <div class="container">
-            <ul>
-                <li><a href="index.php">Home</a></li>
-                <?php foreach ($categories as $cat): ?>
-                    <li><a href="index.php?category=<?php echo htmlspecialchars($cat['category']); ?>">
-                        <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $cat['category']))); ?>
-                    </a></li>
-                <?php endforeach; ?>
-            </ul>
+                <ul>
+                    <li><a href="index.php">Home</a></li>
+                    <?php foreach ($categories as $cat): ?>
+                        <li><a href="index.php?category=<?php echo htmlspecialchars($cat['category']); ?>">
+                            <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $cat['category']))); ?>
+                        </a></li>
+                    <?php endforeach; ?>
+                </ul>
             </div>
         </nav>
     </header>
@@ -131,10 +131,14 @@ foreach ($cartItems as $item) {
                 <div class="checkout-container">
                     <div class="shipping-info">
                         <h2>Shipping Information</h2>
-                        <input type="text" name="full_name" placeholder="Full Name" value="<?php echo htmlspecialchars($fullName); ?>" required>
-                        <input type="text" name="email" placeholder="Email" value="<?php echo htmlspecialchars($email); ?>">
-                        <input type="text" name="street_address" placeholder="Street Address" value="<?php echo htmlspecialchars($streetAddress); ?>" required>
-                        <input type="tel" name="phone" placeholder="Phone Number" value="<?php echo htmlspecialchars($phoneNumber); ?>" required>
+                        <label for="full_name">Full Name</label>
+                        <input type="text" id="full_name" name="full_name" placeholder="Full Name" value="<?php echo htmlspecialchars($fullName); ?>" required>
+                        <label for="email">Email</label>
+                        <input type="text" id="email" name="email" placeholder="Email" value="<?php echo htmlspecialchars($email); ?>">
+                        <label for="street_address">Street Address</label>
+                        <input type="text" id="street_address" name="street_address" placeholder="Street Address" value="<?php echo htmlspecialchars($streetAddress); ?>" required>
+                        <label for="phone">Phone Number</label>
+                        <input type="text" id="phone" name="phone" placeholder="Phone Number" value="<?php echo htmlspecialchars($phoneNumber); ?>" required>
                     </div>
                     <div class="payment-info">
                         <h2>Payment Method</h2>
