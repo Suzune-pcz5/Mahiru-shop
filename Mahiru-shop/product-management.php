@@ -23,10 +23,10 @@ if ($page < 1) {
 }
 $offset = ($page - 1) * $limit;
 
-// Tính tổng số sản phẩm với điều kiện tìm kiếm
-$count_sql = "SELECT COUNT(*) AS total FROM products";
+// Tính tổng số sản phẩm với điều kiện tìm kiếm và không bị ẩn
+$count_sql = "SELECT COUNT(*) AS total FROM products WHERE is_hidden = 0";
 if (!empty($search)) {
-    $count_sql .= " WHERE name LIKE '%$search%' OR category LIKE '%$search%'";
+    $count_sql .= " AND (name LIKE '%$search%' OR category LIKE '%$search%')";
 }
 $count_result = $conn->query($count_sql);
 $totalProducts = 0;
@@ -36,10 +36,10 @@ if ($count_result && $count_result->num_rows > 0) {
 }
 $totalPages = ceil($totalProducts / $limit);
 
-// Truy vấn lấy danh sách sản phẩm
-$sql = "SELECT * FROM products";
+// Truy vấn lấy danh sách sản phẩm không bị ẩn
+$sql = "SELECT * FROM products WHERE is_hidden = 0";
 if (!empty($search)) {
-    $sql .= " WHERE name LIKE '%$search%' OR category LIKE '%$search%'";
+    $sql .= " AND (name LIKE '%$search%' OR category LIKE '%$search%')";
 }
 $sql .= " LIMIT $limit OFFSET $offset";
 $result = $conn->query($sql);
