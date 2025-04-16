@@ -23,11 +23,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $result = $stmt->get_result();
 
         if ($row = $result->fetch_assoc()) {
-            if (password_verify($pass, $row['password'])) {
-                // Xóa toàn bộ session cũ trước khi thiết lập session mới
+            if ($row['status'] == 'Deactive') {
+                $message = "The account has been locked";
+            } else if (password_verify($pass, $row['password'])) {
                 session_unset();
-
-                // Thiết lập session cho user mới
                 $_SESSION['user_id'] = $row['id'];
                 $_SESSION['user_name'] = $row['username'];
                 $_SESSION['user_email'] = $row['email'];
@@ -92,13 +91,15 @@ $conn->close();
                 <div class="form-footer">
                     <p>Don't have an account? <a href="sign_up.php" class="signup-link">Sign up</a></p>
                 </div>
-                <p><?php echo $message; ?></p>
+                <?php if (!empty($message)): ?>
+                    <script>alert('<?php echo addslashes($message); ?>');</script>
+                <?php endif; ?>
             </div>
         </main>
 
         <footer>
             <div class="container">
-                <p>&copy; Mahiru Shop. We are pleased to serve you.</p>
+                <p>© Mahiru Shop. We are pleased to serve you.</p>
             </div>
         </footer>
     </div>

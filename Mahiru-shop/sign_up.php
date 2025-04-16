@@ -18,77 +18,67 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $pass = trim($_POST['password']);
     $address = trim($_POST['address']);
     $phone = trim($_POST['phone']);
-    $role = "User"; // Default role is User
-    $created_at = date("Y-m-d H:i:s"); // Current timestamp
+    $role = "Users"; // Vai trò mặc định là Users
+    $created_at = date("Y-m-d H:i:s"); // Thời gian hiện tại
 
     if (!empty($user_name) && !empty($email) && !empty($pass) && !empty($address) && !empty($phone)) {
-        // Check if there is any Admin yet; if not, assign the first user as Admin
+        // Kiểm tra xem có Admin nào chưa, nếu chưa thì gán người đầu tiên là Admin
         $check_admin = $conn->query("SELECT COUNT(*) as total FROM users WHERE role='Admin'");
         $admin_count = $check_admin->fetch_assoc()['total'];
-
         if ($admin_count == 0) {
             $role = "Admin";
         }
 
-        // Check if email already exists
-        $stmt = $conn->prepare("SELECT * FROM users WHERE email = ?");
-        $stmt->bind_param("s", $email);
+        // Kiểm tra username hoặc email đã tồn tại chưa
+        $stmt = $conn->prepare("SELECT * FROM users WHERE username = ? OR email = ?");
+        $stmt->bind_param("ss", $user_name, $email);
         $stmt->execute();
         $result = $stmt->get_result();
 
         if ($row = $result->fetch_assoc()) {
-            // Email exists -> Log in directly
-            $_SESSION['user_id'] = $row['id'];
-            $_SESSION['user_name'] = $row['username'];
-            $_SESSION['user_email'] = $row['email'];
-            $_SESSION['user_address'] = $row['address'];
-            $_SESSION['user_phone'] = $row['phone'];
-            $_SESSION['user_role'] = $row['role'];
-
-            echo "<script>
-                    alert('Welcome back, " . htmlspecialchars($row['username']) . "! Logging in...');
-                    window.location.href = 'index_account.php';
-                  </script>";
-            exit();
+            if ($row['status'] == 'Deactive') {
+                $message = "The account has been locked";
+            } else {
+                $message = "Username or Email already exists!";
+            }
         } else {
-            // Create a new account
+            // Tạo tài khoản mới
             $hashed_password = password_hash($pass, PASSWORD_BCRYPT);
 
-            // Find the smallest available ID (fill gaps)
+            // Tìm ID nhỏ nhất có sẵn
             $result = $conn->query("SELECT id + 1 AS next_id 
                                     FROM users 
                                     WHERE id + 1 NOT IN (SELECT id FROM users) 
                                     ORDER BY next_id 
                                     LIMIT 1");
             $row = $result->fetch_assoc();
-            $next_id = $row['next_id'] ?? 1; // Default to 1 if no rows exist
+            $next_id = $row['next_id'] ?? 1;
 
-            // Ensure the ID is not already taken (race condition check)
+            // Kiểm tra lại để tránh trùng lặp ID
             $checkStmt = $conn->prepare("SELECT id FROM users WHERE id = ?");
             $checkStmt->bind_param("i", $next_id);
             $checkStmt->execute();
             $checkResult = $checkStmt->get_result();
             while ($checkResult->fetch_assoc()) {
-                $next_id++; // Increment until an available ID is found
+                $next_id++;
                 $checkStmt->bind_param("i", $next_id);
                 $checkStmt->execute();
-                $checkResult = $stmt->get_result();
+                $checkResult = $checkStmt->get_result();
             }
 
-            // Insert the new record with the assigned ID
+            // Chèn bản ghi mới với ID đã xác định
             $stmt = $conn->prepare("INSERT INTO users (id, username, email, password, address, phone, role, created_at) 
                                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->bind_param("isssssss", $next_id, $user_name, $email, $hashed_password, $address, $phone, $role, $created_at);
 
             if ($stmt->execute()) {
-                // Registration successful -> Log in immediately
-                $_SESSION['user_id'] = $next_id; // Thêm dòng này để lưu user_id
+                $_SESSION['user_id'] = $next_id;
                 $_SESSION['user_name'] = $user_name;
                 $_SESSION['user_email'] = $email;
                 $_SESSION['user_address'] = $address;
                 $_SESSION['user_phone'] = $phone;
                 $_SESSION['user_role'] = $role;
-            
+
                 echo "<script>
                         alert('Account registered successfully! Logging in...');
                         window.location.href = 'index_account.php';
@@ -156,7 +146,9 @@ $conn->close();
                 <div class="form-footer">
                     <p>Already have an account? <a href="login.php" class="signup-link">Login</a></p>
                 </div>  
-                <p><?php echo $message; ?></p>
+                <?php if (!empty($message)): ?>
+                    <script>alert('<?php echo addslashes($message); ?>');</script>
+                <?php endif; ?>
             </div>
         </main>
 
