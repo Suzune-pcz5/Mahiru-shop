@@ -23,6 +23,18 @@ try {
 // Lấy user_id từ session
 $userId = $_SESSION['user_id'];
 
+// Lấy thông tin người dùng từ bảng users
+$userStmt = $conn->prepare("SELECT username, email, address, phone FROM users WHERE id = :user_id");
+$userStmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
+$userStmt->execute();
+$userInfo = $userStmt->fetch(PDO::FETCH_ASSOC);
+
+// Gán giá trị mặc định từ thông tin người dùng
+$fullName = $userInfo['username'] ?? '';
+$email = $userInfo['email'] ?? '';
+$streetAddress = $userInfo['address'] ?? '';
+$phoneNumber = $userInfo['phone'] ?? '';
+
 // Lấy dữ liệu giỏ hàng từ cơ sở dữ liệu
 $stmt = $conn->prepare("
     SELECT c.product_id, c.quantity, p.name, p.price, p.image 
@@ -33,7 +45,6 @@ $stmt = $conn->prepare("
 $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
 $stmt->execute();
 $cartItems = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
 
 // ========== LẤY DANH MỤC TỪ BẢNG products ==========
 $categoryQuery = $conn->query("SELECT DISTINCT category FROM products");
@@ -75,7 +86,7 @@ foreach ($cartItems as $item) {
                 </div>
                 <div class="user-actions">
                     <i class="fas fa-user"></i>
-                    <span class="name"><?php echo htmlspecialchars($_SESSION['user_name']); ?></span>
+                    <span class="name"><?php echo htmlspecialchars($userInfo['username']); ?></span>
                     <div class="login-dropdown">
                         <a href="order_history.php" class="login-option">Order History</a>
                         <a href="edit_profile.php" class="login-option">Edit Profile</a>
@@ -120,13 +131,10 @@ foreach ($cartItems as $item) {
                 <div class="checkout-container">
                     <div class="shipping-info">
                         <h2>Shipping Information</h2>
-                        <input type="text" name="full_name" placeholder="Full Name" required>
-                        <input type="text" name="street_address" placeholder="Street Address" required>
-                        <input type="text" name="city" placeholder="City" required>
-                        <input type="text" name="state" placeholder="State/Province">
-                        <input type="text" name="zip_code" placeholder="ZIP/Postal Code">
-                        <input type="text" name="country" placeholder="Country" required>
-                        <input type="tel" name="phone" placeholder="Phone Number" required>
+                        <input type="text" name="full_name" placeholder="Full Name" value="<?php echo htmlspecialchars($fullName); ?>" required>
+                        <input type="text" name="email" placeholder="Email" value="<?php echo htmlspecialchars($email); ?>">
+                        <input type="text" name="street_address" placeholder="Street Address" value="<?php echo htmlspecialchars($streetAddress); ?>" required>
+                        <input type="tel" name="phone" placeholder="Phone Number" value="<?php echo htmlspecialchars($phoneNumber); ?>" required>
                     </div>
                     <div class="payment-info">
                         <h2>Payment Method</h2>
@@ -174,7 +182,7 @@ foreach ($cartItems as $item) {
     </main>
     <footer>
         <div class="container">
-            <p>&copy; Mahiru Shop. We are pleased to serve you.</p>
+            <p>© Mahiru Shop. We are pleased to serve you.</p>
         </div>
     </footer>
 </body>
