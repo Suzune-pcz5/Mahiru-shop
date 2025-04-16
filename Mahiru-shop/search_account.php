@@ -230,7 +230,7 @@ function buildSortUrl($sortOption, $searchName, $category, $minPrice, $maxPrice,
                         <?php endif; ?>
                         <div class="login-dropdown">
                             <?php if (strtolower($currentUser['role']) === 'admin'): ?>
-                                <a href="edit.php" class="login-option">Edit</a>
+                                <a href="admin.php" class="login-option">Edit</a>
                             <?php else: ?>
                                 <a href="order_history.php" class="login-option">Order history</a>
                             <?php endif; ?>

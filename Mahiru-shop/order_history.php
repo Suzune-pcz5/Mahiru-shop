@@ -78,7 +78,7 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <?php endif; ?>
                             <div class="login-dropdown">
                                 <?php if (strtolower($currentUser['role']) === 'admin'): ?>
-                                    <a href="edit.php" class="login-option">Admin Panel</a>
+                                    <a href="admin.php" class="login-option">Admin Panel</a>
                                     <a href="order_history.php" class="login-option">Order History</a>
                                     <a href="edit_profile.php" class="login-option">Edit Profile</a>
                                 <?php else: ?>
