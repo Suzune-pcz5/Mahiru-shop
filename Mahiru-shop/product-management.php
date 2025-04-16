@@ -23,10 +23,10 @@ if ($page < 1) {
 }
 $offset = ($page - 1) * $limit;
 
-// Tính tổng số sản phẩm với điều kiện tìm kiếm và không bị ẩn
-$count_sql = "SELECT COUNT(*) AS total FROM products WHERE is_hidden = 0";
+// Tính tổng số sản phẩm với điều kiện tìm kiếm
+$count_sql = "SELECT COUNT(*) AS total FROM products WHERE 1";
 if (!empty($search)) {
-    $count_sql .= " AND (name LIKE '%$search%' OR category LIKE '%$search%')";
+    $count_sql .= " AND (name LIKE '%$search%')";
 }
 $count_result = $conn->query($count_sql);
 $totalProducts = 0;
@@ -36,10 +36,10 @@ if ($count_result && $count_result->num_rows > 0) {
 }
 $totalPages = ceil($totalProducts / $limit);
 
-// Truy vấn lấy danh sách sản phẩm không bị ẩn
-$sql = "SELECT * FROM products WHERE is_hidden = 0";
+// Truy vấn lấy danh sách sản phẩm (bỏ điều kiện is_hidden = 0)
+$sql = "SELECT * FROM products WHERE 1";
 if (!empty($search)) {
-    $sql .= " AND (name LIKE '%$search%' OR category LIKE '%$search%')";
+    $sql .= " AND (name LIKE '%$search%')";
 }
 $sql .= " LIMIT $limit OFFSET $offset";
 $result = $conn->query($sql);
@@ -128,6 +128,7 @@ $result = $conn->query($sql);
                                     <th>Product image</th>
                                     <th>Category</th>
                                     <th>Price</th>                                       
+                                    <th>Status</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -141,11 +142,12 @@ $result = $conn->query($sql);
                                     echo "<td><img src='" . $row["image"] . "' alt='" . $row["name"] . "' class='product-image'></td>";
                                     echo "<td>" . $row["category"] . "</td>";
                                     echo "<td>$" . number_format($row["price"], 2) . "</td>";
+                                    echo "<td>" . ($row['is_hidden'] ? 'Disable' : 'Enable') . "</td>";
                                     echo "<td><a href='edit-product.php?id=" . $row["id"] . "' class='action-btn'>Edit</a></td>";
                                     echo "</tr>";
                                 }
                             } else {
-                                echo "<tr><td colspan='6'>No products found</td></tr>";
+                                echo "<tr><td colspan='7'>No products found</td></tr>";
                             }
                             ?>
                             </tbody>
