@@ -85,7 +85,7 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <a href="order_history.php" class="login-option">Order History</a>
                                     <a href="edit_profile.php" class="login-option">Edit Profile</a>
                                 <?php endif; ?>
-                                <a href="logout.php" class="login-option">Log out</a>
+                                <a href="index.php" class="login-option">Log out</a>
                             </div>
                         <?php else: ?>
                             <a class="login-link">
