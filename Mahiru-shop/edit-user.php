@@ -131,17 +131,15 @@ $conn->close();
                             <div class="form-group">
                                 <label for="edit-role">Role:</label>
                                 <select id="edit-role" name="edit-role">
-                                    <option value="user" <?php echo ($user['role'] == 'user') ? 'selected' : ''; ?>>User</option>
-                                    <option value="admin" <?php echo ($user['role'] == 'admin') ? 'selected' : ''; ?>>Admin</option>
-                                    <option value="manager" <?php echo ($user['role'] == 'manager') ? 'selected' : ''; ?>>Manager</option>
+                                    <option value="User" <?php echo ($user['role'] == 'User') ? 'selected' : ''; ?>>User</option>
+                                    <option value="Admin" <?php echo ($user['role'] == 'Admin') ? 'selected' : ''; ?>>Admin</option>
                                 </select>
                             </div>
-
                             <div class="form-group">
                                 <label for="edit-status">Status:</label>
                                 <select id="edit-status" name="edit-status">
-                                    <option value="active" <?php echo ($user['status'] == 'active') ? 'selected' : ''; ?>>Active</option>
-                                    <option value="inactive" <?php echo ($user['status'] == 'inactive') ? 'selected' : ''; ?>>Deactive</option>
+                                    <option value="Active" <?php echo ($user['status'] == 'Active') ? 'selected' : ''; ?>>Active</option>
+                                    <option value="Deactive" <?php echo ($user['status'] == 'Deactive') ? 'selected' : ''; ?>>Deactive</option>
                                 </select>
                             </div>
 
@@ -166,3 +164,4 @@ $conn->close();
     </script>
 </body>
 </html>
+
