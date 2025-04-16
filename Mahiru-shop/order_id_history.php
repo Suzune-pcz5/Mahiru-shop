@@ -14,6 +14,7 @@ if (!isset($_GET['order_id']) || !is_numeric($_GET['order_id'])) {
 }
 
 $orderId = (int)$_GET['order_id'];
+$userId = $_SESSION['user_id'];
 
 // Kết nối cơ sở dữ liệu
 $host = 'localhost';
@@ -28,10 +29,21 @@ try {
     die("Connection failed: " . $e->getMessage());
 }
 
+// Lấy thông tin người dùng từ bảng users
+$userStmt = $conn->prepare("SELECT username, email, address, phone FROM users WHERE id = :user_id");
+$userStmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
+$userStmt->execute();
+$user = $userStmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$user) {
+    header("Location: order_history.php");
+    exit();
+}
+
 // Lấy thông tin đơn hàng
-$orderStmt = $conn->prepare("SELECT * FROM orders WHERE id = :order_id AND user_id = :user_id");
+$orderStmt = $conn->prepare("SELECT id, user_id, payment_method, total_price, created_at FROM orders WHERE id = :order_id AND user_id = :user_id");
 $orderStmt->bindValue(':order_id', $orderId, PDO::PARAM_INT);
-$orderStmt->bindValue(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
+$orderStmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
 $orderStmt->execute();
 $order = $orderStmt->fetch(PDO::FETCH_ASSOC);
 
@@ -87,7 +99,7 @@ $estimatedDelivery = (clone $orderDate)->modify('+5 days');
           </div>
           <div class="user-actions">
             <i class="fas fa-user"></i>
-            <span class="name"><?php echo htmlspecialchars($_SESSION['user_name']); ?></span>
+            <span class="name"><?php echo htmlspecialchars($user['username']); ?></span>
             <div class="login-dropdown">
                 <a href="order_history.php" class="login-option">Order History</a>
                 <a href="edit_profile.php" class="login-option">Edit Profile</a>
@@ -99,7 +111,7 @@ $estimatedDelivery = (clone $orderDate)->modify('+5 days');
       <div class="main-header">
         <div class="container">
           <div class="logo">
-            <a href="index_account.php" class="logo-link"><h1>MAHIRU<span>.</span></h1></a>
+            <a href="index_account.php" class="logo-link"><h1>MAhiru<span>.</span></h1></a>
           </div>
           <div class="search-bar">
             <form action="search_account.php" method="GET">
@@ -184,8 +196,10 @@ $estimatedDelivery = (clone $orderDate)->modify('+5 days');
                 <div class="shipping-payment-info">
                     <div class="shipping-info">
                         <h2>Shipping Information</h2>
-                        <p><strong>Address:</strong></p>
-                        <p><?php echo htmlspecialchars($order['address']); ?></p>
+                        <p><strong>Full Name:</strong> <?php echo htmlspecialchars($user['username'] ?? 'N/A'); ?></p>
+                        <p><strong>Email:</strong> <?php echo htmlspecialchars($user['email'] ?? 'N/A'); ?></p>
+                        <p><strong>Phone Number:</strong> <?php echo htmlspecialchars($user['phone'] ?? 'N/A'); ?></p>
+                        <p><strong>Address:</strong> <?php echo htmlspecialchars($user['address'] ?? 'N/A'); ?></p>
                     </div>
                     <div class="payment-info">
                         <h2>Payment Information</h2>
@@ -198,7 +212,7 @@ $estimatedDelivery = (clone $orderDate)->modify('+5 days');
 
     <footer>
       <div class="container">
-        <p>&copy; Mahiru Shop. We are pleased to serve you.</p>
+        <p>© Mahiru Shop. We are pleased to serve you.</p>
       </div>
     </footer>
 </body>
