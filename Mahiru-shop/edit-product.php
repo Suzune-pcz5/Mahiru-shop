@@ -4,53 +4,46 @@ $username = "root";
 $password = "";
 $dbname = "mahiru_shop";
 
-// Kết nối đến MySQL
 $conn = new mysqli($servername, $username, $password, $dbname);
-
-// Kiểm tra kết nối
 if ($conn->connect_error) {
     die("Kết nối thất bại: " . $conn->connect_error);
 }
 
-// Lấy ID sản phẩm từ URL
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-
 if ($id <= 0) {
     header("Location: product-management.php");
     exit();
 }
 
-// Truy vấn sản phẩm từ database
+// Lấy thông tin sản phẩm
 $stmt = $conn->prepare("SELECT * FROM products WHERE id = ?");
 $stmt->bind_param("i", $id);
 $stmt->execute();
 $result = $stmt->get_result();
 $product = $result->fetch_assoc();
-
 if (!$product) {
-    echo "<script>alert('Product doesn't exist!'); window.location='product-management.php';</script>";
+    echo "<script>alert('Product doesn\'t exist!'); window.location='product-management.php';</script>";
     exit();
 }
 
-// Xử lý cập nhật sản phẩm
+// Cập nhật sản phẩm
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["update"])) {
     $name = $conn->real_escape_string($_POST["product-name"]);
     $description = $conn->real_escape_string($_POST["product-description"]);
     $price = (float)$_POST["product-price"];
     $category = $conn->real_escape_string($_POST["product-category"]);
-    $image = $product['image']; // Giữ nguyên ảnh cũ nếu không cập nhật
+    $is_hidden = $_POST["product-hidden"] === "1" ? 1 : 0;
 
+    $image = $product['image'];
     if (!empty($_FILES["product-image"]["name"])) {
-        $target_dir = "uploads/"; // Thư mục lưu ảnh
+        $target_dir = "uploads/";
         $target_file = $target_dir . basename($_FILES["product-image"]["name"]);
         move_uploaded_file($_FILES["product-image"]["tmp_name"], $target_file);
         $image = $target_file;
     }
 
-    // Cập nhật dữ liệu vào database
-    $update_stmt = $conn->prepare("UPDATE products SET name = ?, description = ?, price = ?, category = ?, image = ? WHERE id = ?");
-    $update_stmt->bind_param("ssdssi", $name, $description, $price, $category, $image, $id);
-    
+    $update_stmt = $conn->prepare("UPDATE products SET name = ?, description = ?, price = ?, category = ?, image = ?, is_hidden = ? WHERE id = ?");
+    $update_stmt->bind_param("ssdssii", $name, $description, $price, $category, $image, $is_hidden, $id);
     if ($update_stmt->execute()) {
         echo "<script>alert('Product updated successfully!'); window.location='product-management.php';</script>";
     } else {
@@ -59,48 +52,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["update"])) {
     $update_stmt->close();
 }
 
-// Xử lý xóa sản phẩm
+// Chỉ ẩn sản phẩm khi bấm nút Delete
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["delete"])) {
-    // Kiểm tra xem sản phẩm có trong đơn hàng nào không
-    $check_stmt = $conn->prepare("SELECT COUNT(*) AS total FROM order_items WHERE product_id = ?");
-    $check_stmt->bind_param("i", $id);
-    $check_stmt->execute();
-    $check_result = $check_stmt->get_result();
-    $row = $check_result->fetch_assoc();
-    $order_count = $row['total'];
-    $check_stmt->close();
-
-    if ($order_count == 0) {
-        // Trường hợp 1: Sản phẩm không có trong đơn hàng → Xóa sản phẩm
-        $delete_stmt = $conn->prepare("DELETE FROM products WHERE id = ?");
-        $delete_stmt->bind_param("i", $id);
-        if ($delete_stmt->execute()) {
-            echo "<script>alert('Product deleted successfully!'); window.location='product-management.php';</script>";
-        } else {
-            echo "Lỗi: " . $conn->error;
-        }
-        $delete_stmt->close();
+    $hide_stmt = $conn->prepare("UPDATE products SET is_hidden = 1 WHERE id = ?");
+    $hide_stmt->bind_param("i", $id);
+    if ($hide_stmt->execute()) {
+        echo "<script>alert('Product hidden successfully!'); window.location='product-management.php';</script>";
     } else {
-        // Trường hợp 2: Sản phẩm có trong đơn hàng → Ẩn sản phẩm
-        $hide_stmt = $conn->prepare("UPDATE products SET is_hidden = 1 WHERE id = ?");
-        $hide_stmt->bind_param("i", $id);
-        if ($hide_stmt->execute()) {
-            echo "<script>alert('Product deleted successfully!'); window.location='product-management.php';</script>";
-        } else {
-            echo "Lỗi: " . $conn->error;
-        }
-        $hide_stmt->close();
+        echo "Lỗi: " . $conn->error;
     }
+    $hide_stmt->close();
 }
 
 $conn->close();
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Product - Mahiru Shop</title>
     <link rel="stylesheet" href="./css/admin-styles.css">
 </head>
@@ -119,9 +88,7 @@ $conn->close();
                     </ul>
                 </nav>
                 <div class="user-info">
-                    <div class="user-icon">
-                        <i data-lucide="user-circle"></i>
-                    </div>
+                    <div class="user-icon"><i data-lucide="user-circle"></i></div>
                     <span class="admin-name">ADMIN</span>
                     <a href="./loginad.php" class="logout">Log out</a>
                 </div>
@@ -149,12 +116,20 @@ $conn->close();
                             <div class="form-group">
                                 <label for="product-category">Category</label>
                                 <select id="product-category" name="product-category">
-                                    <option value="Gundam" <?php if($product['category'] == 'Gundam') echo 'selected'; ?>>Gundam </option>
-                                    <option value="Kamen Rider" <?php if($product['category'] == 'Kamen Rider') echo 'selected'; ?>>Kamen Rider</option>
-                                    <option value="Standee" <?php if($product['category'] == 'Standee') echo 'selected'; ?>>Standee</option>
-                                    <option value="Keychain" <?php if($product['category'] == 'Keychain') echo 'selected'; ?>>Keychain</option>
-                                    <option value="Plush" <?php if($product['category'] == 'Plush') echo 'selected'; ?>>Plush</option>
-                                    <option value="Figure" <?php if($product['category'] == 'Figure') echo 'selected'; ?>>Figure</option>
+                                    <?php
+                                    $categories = ["Gundam", "Kamen Rider", "Standee", "Keychain", "Plush", "Figure"];
+                                    foreach ($categories as $cat) {
+                                        $selected = ($product['category'] == $cat) ? 'selected' : '';
+                                        echo "<option value=\"$cat\" $selected>$cat</option>";
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="product-hidden">Hidden Status</label>
+                                <select id="product-hidden" name="product-hidden">
+                                    <option value="0" <?php if ($product['is_hidden'] == 0) echo "selected"; ?>>Enabled</option>
+                                    <option value="1" <?php if ($product['is_hidden'] == 1) echo "selected"; ?>>Disabled</option>
                                 </select>
                             </div>
                             <div class="form-group">
