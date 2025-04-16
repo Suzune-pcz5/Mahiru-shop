@@ -49,15 +49,12 @@ if (isset($_GET['add_to_cart']) && isset($_SESSION['user_id'])) {
     }
 
     $_SESSION['success_message'] = "Product added to cart successfully!";
-    // Tạo lại URL với các tham số hiện tại, trừ 'add_to_cart'
-    $redirectParams = $_GET;
-    unset($redirectParams['add_to_cart']);
-    header("Location: index_account.php?" . http_build_query($redirectParams));
+    header("Location: index_account.php");
     exit;
 }
 
 // ========== LẤY DANH MỤC TỪ BẢNG products ==========
-$categoryQuery = $conn->query("SELECT DISTINCT category FROM products");
+$categoryQuery = $conn->query("SELECT DISTINCT category FROM products WHERE is_hidden = 0");
 $categories = $categoryQuery->fetchAll(PDO::FETCH_ASSOC);
 
 // ========== XỬ LÝ TÌM KIẾM, LỌC SẢN PHẨM & PHÂN TRANG ==========
@@ -67,57 +64,60 @@ $minPrice   = isset($_GET['min_price']) ? (int)$_GET['min_price'] : 0;
 $maxPrice   = isset($_GET['max_price']) ? (int)$_GET['max_price'] : 300;
 
 $limit = 9;
-$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($page - 1) * $limit;
 
-// Xử lý nếu min_price > max_price
+// Validate price range
 if ($minPrice > $maxPrice) {
     $temp = $minPrice;
     $minPrice = $maxPrice;
     $maxPrice = $temp;
 }
 
-$whereClauses = [];
-$params = [];
-
+// Lấy tổng số sản phẩm theo điều kiện lọc
+$countSql = "SELECT COUNT(*) FROM products WHERE is_hidden = 0 AND price BETWEEN :min_price AND :max_price";
 if (!empty($searchName)) {
-    $whereClauses[] = "name LIKE :name";
-    $params[':name'] = "%$searchName%";
+    $countSql .= " AND name LIKE :name";
 }
 if ($category !== 'all') {
-    $whereClauses[] = "category = :category";
-    $params[':category'] = $category;
+    $countSql .= " AND category = :category";
 }
-// Lọc theo khoảng giá
-$whereClauses[] = "price BETWEEN :min_price AND :max_price";
-$params[':min_price'] = $minPrice;
-$params[':max_price'] = $maxPrice;
-
-$whereSql = !empty($whereClauses) ? "WHERE " . implode(" AND ", $whereClauses) : "";
-
-// Lấy tổng số sản phẩm
-$countSql = "SELECT COUNT(*) FROM products $whereSql";
 $countStmt = $conn->prepare($countSql);
-foreach ($params as $key => $value) {
-    $type = in_array($key, [':min_price', ':max_price']) ? PDO::PARAM_INT : PDO::PARAM_STR;
-    $countStmt->bindValue($key, $value, $type);
+$countStmt->bindValue(':min_price', $minPrice, PDO::PARAM_INT);
+$countStmt->bindValue(':max_price', $maxPrice, PDO::PARAM_INT);
+if (!empty($searchName)) {
+    $countStmt->bindValue(':name', "%$searchName%", PDO::PARAM_STR);
+}
+if ($category !== 'all') {
+    $countStmt->bindValue(':category', $category, PDO::PARAM_STR);
 }
 $countStmt->execute();
 $totalProducts = $countStmt->fetchColumn();
 $totalPages = ceil($totalProducts / $limit);
 
-// Truy vấn sản phẩm
-$sql = "SELECT * FROM products $whereSql LIMIT :limit OFFSET :offset";
+// Truy vấn sản phẩm theo điều kiện lọc
+$sql = "SELECT * FROM products WHERE is_hidden = 0 AND price BETWEEN :min_price AND :max_price";
+if (!empty($searchName)) {
+    $sql .= " AND name LIKE :name";
+}
+if ($category !== 'all') {
+    $sql .= " AND category = :category";
+}
+$sql .= " LIMIT :limit OFFSET :offset";
+
 $stmt = $conn->prepare($sql);
-foreach ($params as $key => $value) {
-    $type = in_array($key, [':min_price', ':max_price']) ? PDO::PARAM_INT : PDO::PARAM_STR;
-    $stmt->bindValue($key, $value, $type);
+$stmt->bindValue(':min_price', $minPrice, PDO::PARAM_INT);
+$stmt->bindValue(':max_price', $maxPrice, PDO::PARAM_INT);
+if (!empty($searchName)) {
+    $stmt->bindValue(':name', "%$searchName%", PDO::PARAM_STR);
+}
+if ($category !== 'all') {
+    $stmt->bindValue(':category', $category, PDO::PARAM_STR);
 }
 $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
 $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 $stmt->execute();
 $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
 ?>
 
 <!DOCTYPE html>
@@ -190,14 +190,11 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <a href="index_account.php" class="logo-link"><h1>MAHIRU<span>.</span></h1></a>
                 </div>
                 <div class="search-bar">
-                    <form action="search_account.php" method="GET">
-                        <input type="text" name="name" placeholder="Search here" value="<?php echo htmlspecialchars($searchName); ?>" />
-                        <input type="hidden" name="category" value="<?php echo htmlspecialchars($category); ?>" />
-                        <input type="hidden" name="min_price" value="<?php echo htmlspecialchars($minPrice); ?>" />
-                        <input type="hidden" name="max_price" value="<?php echo htmlspecialchars($maxPrice); ?>" />
-                        <button type="submit" class="search-button">Search</button>
-                    </form>
-                </div>
+    <form action="search_account.php" method="GET">
+        <input type="text" name="name" placeholder="Search here" value="<?php echo htmlspecialchars($searchName); ?>" />
+        <button type="submit" class="search-button">Search</button>
+    </form>
+</div>
                 <div class="user-menu">
                     <a href="cart.php" class="icon"><i class="fas fa-shopping-cart"></i></a>
                 </div>
@@ -217,34 +214,34 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     <main>
         <div class="container">
-            <div class="filter-sidebar">
-                <form action="index_account.php" method="GET">
-                    <h3>Name:</h3>
-                    <div class="filter-name">
-                        <input type="text" name="name" placeholder="Enter product name" class="filter-input" value="<?php echo htmlspecialchars($searchName); ?>">
-                    </div>
-                    <h3>Category:</h3>
-                    <div class="filter-category">
-                        <select name="category" class="filter-select">
-                            <option value="all" <?php echo $category === 'all' ? 'selected' : ''; ?>>All Categories</option>
-                            <?php foreach ($categories as $cat): ?>
-                                <option value="<?php echo htmlspecialchars($cat['category']); ?>" <?php echo $category === $cat['category'] ? 'selected' : ''; ?>>
-                                    <?php echo htmlspecialchars($cat['category']); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="filter-price">
-                        <h3>Price:</h3>
-                        <div class="price-range-inputs">
-                            <input type="number" name="min_price" min="0" max="300" placeholder="Min" value="<?php echo htmlspecialchars($minPrice); ?>">
-                            <span>to</span>
-                            <input type="number" name="max_price" min="0" max="300" placeholder="Max" value="<?php echo htmlspecialchars($maxPrice); ?>">
-                        </div>
-                    </div>
-                    <button type="submit" class="filter-button" style="margin-top: 10px">Search</button>
-                </form>
+        <div class="filter-sidebar">
+    <form action="search_account.php" method="GET">
+        <h3>Name:</h3>
+        <div class="filter-name">
+            <input type="text" name="name" placeholder="Enter product name" class="filter-input" value="<?php echo htmlspecialchars($searchName); ?>">
+        </div>
+        <h3>Category:</h3>
+        <div class="filter-category">
+            <select name="category" class="filter-select">
+                <option value="all" <?php echo $category === 'all' ? 'selected' : ''; ?>>All Categories</option>
+                <?php foreach ($categories as $cat): ?>
+                    <option value="<?php echo htmlspecialchars($cat['category']); ?>" <?php echo $category === $cat['category'] ? 'selected' : ''; ?>>
+                        <?php echo htmlspecialchars($cat['category']); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="filter-price">
+            <h3>Price:</h3>
+            <div class="price-range-inputs">
+                <input type="number" name="min_price" min="0" max="300" placeholder="Min" value="<?php echo htmlspecialchars($minPrice); ?>">
+                <span>to</span>
+                <input type="number" name="max_price" min="0" max="300" placeholder="Max" value="<?php echo htmlspecialchars($maxPrice); ?>">
             </div>
+        </div>
+        <button type="submit" class="filter-button" style="margin-top: 10px">Search</button>
+    </form>
+</div>
             <section class="product-grid">
                 <div class="product-categories">
                     <?php if (count($products) > 0): ?>
@@ -258,7 +255,7 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         <h3><?php echo htmlspecialchars($product['name']); ?></h3>
                                         <p><?php echo htmlspecialchars($product['description'] ?? 'No description available'); ?></p>
                                         <span class="price">$<?php echo htmlspecialchars($product['price']); ?></span>
-                                        <a href="index_account.php?add_to_cart=<?php echo $product['id']; ?>&name=<?php echo urlencode($searchName); ?>&category=<?php echo urlencode($category); ?>&min_price=<?php echo $minPrice; ?>&max_price=<?php echo $maxPrice; ?>&page=<?php echo $page; ?>" class="btn">Add to Cart</a>
+                                        <a href="index_account.php?add_to_cart=<?php echo $product['id']; ?>" class="btn">Add to Cart</a>
                                     </div>
                                 <?php endforeach; ?>
                             </div>
@@ -301,6 +298,5 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
             });
         </script>
     <?php endif; ?>
-
 </body>
 </html>

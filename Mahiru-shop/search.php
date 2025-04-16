@@ -65,7 +65,7 @@ if (isset($_GET['add_to_cart'])) {
 }
 
 // Lấy danh mục từ bảng products
-$categoryQuery = $conn->query("SELECT DISTINCT category FROM products");
+$categoryQuery = $conn->query("SELECT DISTINCT category FROM products WHERE is_hidden = 0");
 $categories = $categoryQuery->fetchAll(PDO::FETCH_ASSOC);
 
 // Xử lý tìm kiếm, lọc và sắp xếp
@@ -88,7 +88,7 @@ $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($page - 1) * $limit;
 
 // Lấy tổng số sản phẩm
-$countSql = "SELECT COUNT(*) FROM products WHERE price BETWEEN :min_price AND :max_price";
+$countSql = "SELECT COUNT(*) FROM products WHERE is_hidden = 0 AND price BETWEEN :min_price AND :max_price";
 if (!empty($searchName)) {
     $countSql .= " AND name LIKE :name";
 }
@@ -109,7 +109,7 @@ $totalProducts = $countStmt->fetchColumn();
 $totalPages = ceil($totalProducts / $limit);
 
 // Xây dựng câu truy vấn SQL
-$sql = "SELECT * FROM products WHERE price BETWEEN :min_price AND :max_price";
+$sql = "SELECT * FROM products WHERE is_hidden = 0 AND price BETWEEN :min_price AND :max_price";
 if (!empty($searchName)) {
     $sql .= " AND name LIKE :name";
 }
@@ -232,11 +232,11 @@ function buildSortUrl($sortOption, $searchName, $category, $minPrice, $maxPrice,
                     <a href="index.php" class="logo-link"><h1>MAHIRU<span>.</span></h1></a>
                 </div>
                 <div class="search-bar">
-                    <form action="search.php" method="GET">
-                        <input type="text" name="name" placeholder="Search here" value="<?php echo htmlspecialchars($searchName); ?>" />
-                        <button type="submit" class="search-button">Search</button>
-                    </form>
-                </div>
+    <form action="search_account.php" method="GET">
+        <input type="text" name="name" placeholder="Search here" value="<?php echo htmlspecialchars($searchName); ?>" />
+        <button type="submit" class="search-button">Search</button>
+    </form>
+</div>
                 <div class="user-menu"></div>
             </div>
         </div>
@@ -278,18 +278,17 @@ function buildSortUrl($sortOption, $searchName, $category, $minPrice, $maxPrice,
                             <input type="number" name="max_price" min="0" max="300" placeholder="Max" value="<?php echo htmlspecialchars($maxPrice); ?>">
                         </div>
                     </div>
-                        <button type="submit" class="filter-button">Search</button>
+                    <button type="submit" class="filter-button">Search</button>
                 </form>
             </div>
             <section class="product-grid">
-                <div class="filter-box">
+            <div class="filter-box">
                     <span class="sort-label">Sort by:</span>
                     <a class="sort-label" href="<?php echo buildSortUrl('relevance', $searchName, $category, $minPrice, $maxPrice, $page); ?>"><button class="filter-btn">Relevance</button></a>
                     <a class="sort-label" href="<?php echo buildSortUrl('newest', $searchName, $category, $minPrice, $maxPrice, $page); ?>"><button class="filter-btn">Newest</button></a>
                     <a class="sort-label" href="<?php echo buildSortUrl('best_selling', $searchName, $category, $minPrice, $maxPrice, $page); ?>"><button class="filter-btn">Best Selling</button></a>
                     <div class="filter-option">
                         <label class="price-btn" for="price-toggle">Price</label>
-                        <input type="checkbox" id="price-toggle" class="price-toggle" />
                         <div class="price-dropdown">
                             <a href="<?php echo buildSortUrl('low_to_high', $searchName, $category, $minPrice, $maxPrice, $page); ?>" class="price-option">Low to High</a>
                             <a href="<?php echo buildSortUrl('high_to_low', $searchName, $category, $minPrice, $maxPrice, $page); ?>" class="price-option">High to Low</a>

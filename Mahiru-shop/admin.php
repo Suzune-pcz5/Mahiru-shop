@@ -37,13 +37,22 @@ if ($revenue_result === false) {
 $revenue_row = $revenue_result->fetch_assoc();
 $revenue = $revenue_row['total'] ?? 0;
 
-// 5. Lấy danh sách đơn hàng gần đây (giới hạn 3 bản ghi)
+// 5. Lấy danh sách đơn hàng gần đây (3 đơn hàng mới nhất)
 $recent_orders_sql = "SELECT o.id, u.username AS customer_name, o.created_at, o.total_price, o.status 
                       FROM orders o 
                       LEFT JOIN users u ON o.user_id = u.id 
                       ORDER BY o.created_at DESC 
                       LIMIT 3";
 $recent_orders_result = $conn->query($recent_orders_sql);
+
+// Lưu kết quả vào mảng và đảo ngược để hiển thị đơn hàng cũ nhất trong 3 đơn hàng ở trên
+$recent_orders = [];
+if ($recent_orders_result->num_rows > 0) {
+    while ($order = $recent_orders_result->fetch_assoc()) {
+        $recent_orders[] = $order;
+    }
+}
+$recent_orders = array_reverse($recent_orders);
 
 // 6. Lấy danh sách sản phẩm bán chạy nhất (dựa trên sold_count, giới hạn 3 sản phẩm)
 $top_products_sql = "SELECT id, name, price, image, sold_count 
@@ -126,8 +135,8 @@ $top_products_result = $conn->query($top_products_sql);
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php if ($recent_orders_result->num_rows > 0): ?>
-                                    <?php while ($order = $recent_orders_result->fetch_assoc()): ?>
+                                <?php if (!empty($recent_orders)): ?>
+                                    <?php foreach ($recent_orders as $order): ?>
                                         <tr>
                                             <td>#<?php echo $order['id']; ?></td>
                                             <td><?php echo htmlspecialchars($order['customer_name'] ?? 'Unknown User'); ?></td>
@@ -135,9 +144,8 @@ $top_products_result = $conn->query($top_products_sql);
                                             <td>$<?php echo number_format($order['total_price'], 2); ?></td>
                                             <td><?php echo ucfirst($order['status']); ?></td>
                                             <td><a href="detail-order.php?id=<?php echo $order['id']; ?>" class="action-btn">View</a></td>
-
                                         </tr>
-                                    <?php endwhile; ?>
+                                    <?php endforeach; ?>
                                 <?php else: ?>
                                     <tr>
                                         <td colspan="6">No recent orders found.</td>

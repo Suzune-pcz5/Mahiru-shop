@@ -67,7 +67,7 @@ if (isset($_GET['add_to_cart']) && isset($_SESSION['user_id'])) {
 }
 
 // Get categories
-$categoryQuery = $conn->query("SELECT DISTINCT category FROM products");
+$categoryQuery = $conn->query("SELECT DISTINCT category FROM products WHERE is_hidden = 0");
 $categories = $categoryQuery->fetchAll(PDO::FETCH_ASSOC);
 
 // Handle search, filter, and sort
@@ -90,7 +90,7 @@ $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $offset = ($page - 1) * $limit;
 
 // Count total products
-$countSql = "SELECT COUNT(*) FROM products WHERE price BETWEEN :min_price AND :max_price";
+$countSql = "SELECT COUNT(*) FROM products WHERE is_hidden = 0 AND price BETWEEN :min_price AND :max_price";
 $params = [
     ':min_price' => $minPrice,
     ':max_price' => $maxPrice
@@ -110,7 +110,7 @@ $totalProducts = $countStmt->fetchColumn();
 $totalPages = ceil($totalProducts / $limit);
 
 // Build product query
-$sql = "SELECT * FROM products WHERE price BETWEEN :min_price AND :max_price";
+$sql = "SELECT * FROM products WHERE is_hidden = 0 AND price BETWEEN :min_price AND :max_price";
 $params = [
     ':min_price' => $minPrice,
     ':max_price' => $maxPrice
@@ -250,22 +250,22 @@ function buildSortUrl($sortOption, $searchName, $category, $minPrice, $maxPrice,
                 </div>
             </div>
         </div>
-<div class="main-header">
-    <div class="container">
-        <div class="logo">
-            <a href="index_account.php" class="logo-link"><h1>MAHIRU<span>.</span></h1></a>
-        </div>
-        <div class="search-bar">
-            <form action="search_account.php" method="GET">
-                <input type="text" name="name" placeholder="Search here" value="<?php echo htmlspecialchars($searchName); ?>" />
-                <button type="submit" class="search-button">Search</button>
-            </form>
-        </div>
-        <div class="user-menu">
-            <a href="cart.php" class="icon"><i class="fas fa-shopping-cart"></i></a>
-        </div>
-    </div>
+        <div class="main-header">
+            <div class="container">
+                <div class="logo">
+                    <a href="index_account.php" class="logo-link"><h1>MAHIRU<span>.</span></h1></a>
+                </div>
+                <div class="search-bar">
+    <form action="search_account.php" method="GET">
+        <input type="text" name="name" placeholder="Search here" value="<?php echo htmlspecialchars($searchName); ?>" />
+        <button type="submit" class="search-button">Search</button>
+    </form>
 </div>
+                <div class="user-menu">
+                    <a href="cart.php" class="icon"><i class="fas fa-shopping-cart"></i></a>
+                </div>
+            </div>
+        </div>
         <nav class="category-nav">
             <div class="container">
                 <ul class="category-list">
@@ -317,7 +317,6 @@ function buildSortUrl($sortOption, $searchName, $category, $minPrice, $maxPrice,
                     <a class="sort-label" href="<?php echo buildSortUrl('best_selling', $searchName, $category, $minPrice, $maxPrice, $page); ?>"><button class="filter-btn">Best Selling</button></a>
                     <div class="filter-option">
                         <label class="price-btn" for="price-toggle">Price</label>
-                        <input type="checkbox" id="price-toggle" class="price-toggle">
                         <div class="price-dropdown">
                             <a href="<?php echo buildSortUrl('low_to_high', $searchName, $category, $minPrice, $maxPrice, $page); ?>" class="price-option">Low to High</a>
                             <a href="<?php echo buildSortUrl('high_to_low', $searchName, $category, $minPrice, $maxPrice, $page); ?>" class="price-option">High to Low</a>
