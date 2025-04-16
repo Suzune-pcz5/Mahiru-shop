@@ -28,19 +28,19 @@ $currentUser = isset($_SESSION['user_name']) ? [
     'role'     => $_SESSION['user_role'] ?? 'user'
 ] : null;
 
-// Lấy dữ liệu đơn hàng của người dùng hiện tại và gán thứ tự riêng
+// Lấy dữ liệu đơn hàng của người dùng hiện tại và gán thứ tự
 $stmt = $conn->prepare("
     SELECT 
         (@row_number:=@row_number + 1) AS order_number,
         o.id,
         o.created_at AS date,
-        o.payment_method AS payment,  -- Sửa ở đây: Lấy giá trị từ cột payment_method
+        o.payment_method AS payment,
         o.status,
         o.total_price AS total
     FROM orders o
     CROSS JOIN (SELECT @row_number:=0) AS init
     WHERE o.user_id = :user_id
-    ORDER BY o.created_at DESC
+    ORDER BY o.created_at ASC  -- Sắp xếp từ cũ nhất đến mới nhất
 ");
 $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
 $stmt->execute();
