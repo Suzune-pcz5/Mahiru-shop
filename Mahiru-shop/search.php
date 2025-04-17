@@ -71,11 +71,11 @@ $categories = $categoryQuery->fetchAll(PDO::FETCH_ASSOC);
 // Xử lý tìm kiếm, lọc và sắp xếp
 $searchName = isset($_GET['name']) ? $_GET['name'] : '';
 $category = isset($_GET['category']) ? $_GET['category'] : 'all';
-$minPrice = isset($_GET['min_price']) ? (int)$_GET['min_price'] : 0;
-$maxPrice = isset($_GET['max_price']) ? (int)$_GET['max_price'] : 300;
+$minPrice = isset($_GET['min_price']) && $_GET['min_price'] !== '' ? (int)$_GET['min_price'] : 0;
+$maxPrice = isset($_GET['max_price']) && $_GET['max_price'] !== '' ? (int)$_GET['max_price'] : 300;
 $sort = isset($_GET['sort']) ? $_GET['sort'] : 'relevance';
 
-// Validate price range
+// Validate price range if both values are provided
 if ($minPrice > $maxPrice) {
     $temp = $minPrice;
     $minPrice = $maxPrice;
@@ -88,33 +88,50 @@ $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($page - 1) * $limit;
 
 // Lấy tổng số sản phẩm
-$countSql = "SELECT COUNT(*) FROM products WHERE is_hidden = 0 AND price BETWEEN :min_price AND :max_price";
+$countSql = "SELECT COUNT(*) FROM products WHERE is_hidden = 0";
+$params = [];
+if (!($minPrice === 0 && $maxPrice === 300)) {
+    $countSql .= " AND price BETWEEN :min_price AND :max_price";
+    $params[':min_price'] = $minPrice;
+    $params[':max_price'] = $maxPrice;
+}
 if (!empty($searchName)) {
     $countSql .= " AND name LIKE :name";
+    $params[':name'] = "%$searchName%";
 }
 if ($category != 'all') {
-    $countSql .= " AND category = :category";
+    $validCategories = array_column($categories, 'category');
+    if (in_array($category, $validCategories)) {
+        $countSql .= " AND category = :category";
+        $params[':category'] = $category;
+    } else {
+        $_SESSION['error_message'] = "Invalid category selected.";
+    }
 }
 $countStmt = $conn->prepare($countSql);
-$countStmt->bindValue(':min_price', $minPrice, PDO::PARAM_INT);
-$countStmt->bindValue(':max_price', $maxPrice, PDO::PARAM_INT);
-if (!empty($searchName)) {
-    $countStmt->bindValue(':name', "%$searchName%", PDO::PARAM_STR);
-}
-if ($category != 'all') {
-    $countStmt->bindValue(':category', $category, PDO::PARAM_STR);
+foreach ($params as $key => $value) {
+    $type = is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR;
+    $countStmt->bindValue($key, $value, $type);
 }
 $countStmt->execute();
 $totalProducts = $countStmt->fetchColumn();
 $totalPages = ceil($totalProducts / $limit);
 
 // Xây dựng câu truy vấn SQL
-$sql = "SELECT * FROM products WHERE is_hidden = 0 AND price BETWEEN :min_price AND :max_price";
+$sql = "SELECT * FROM products WHERE is_hidden = 0";
+$params = [];
+if (!($minPrice === 0 && $maxPrice === 300)) {
+    $sql .= " AND price BETWEEN :min_price AND :max_price";
+    $params[':min_price'] = $minPrice;
+    $params[':max_price'] = $maxPrice;
+}
 if (!empty($searchName)) {
     $sql .= " AND name LIKE :name";
+    $params[':name'] = "%$searchName%";
 }
-if ($category != 'all') {
+if ($category != 'all' && in_array($category, $validCategories)) {
     $sql .= " AND category = :category";
+    $params[':category'] = $category;
 }
 
 switch ($sort) {
@@ -137,18 +154,14 @@ switch ($sort) {
 }
 
 $sql .= " LIMIT :limit OFFSET :offset";
+$params[':limit'] = $limit;
+$params[':offset'] = $offset;
 
 $stmt = $conn->prepare($sql);
-$stmt->bindValue(':min_price', $minPrice, PDO::PARAM_INT);
-$stmt->bindValue(':max_price', $maxPrice, PDO::PARAM_INT);
-if (!empty($searchName)) {
-    $stmt->bindValue(':name', "%$searchName%", PDO::PARAM_STR);
+foreach ($params as $key => $value) {
+    $type = is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR;
+    $stmt->bindValue($key, $value, $type);
 }
-if ($category != 'all') {
-    $stmt->bindValue(':category', $category, PDO::PARAM_STR);
-}
-$stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 $stmt->execute();
 $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -203,6 +216,15 @@ function buildSortUrl($sortOption, $searchName, $category, $minPrice, $maxPrice,
         .error-message.show {
             display: block;
         }
+        .price-range-inputs {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .price-range-inputs input {
+            width: 80px;
+            padding: 5px;
+        }
     </style>
 </head>
 <body>
@@ -232,11 +254,11 @@ function buildSortUrl($sortOption, $searchName, $category, $minPrice, $maxPrice,
                     <a href="index.php" class="logo-link"><h1>MAHIRU<span>.</span></h1></a>
                 </div>
                 <div class="search-bar">
-    <form action="search_account.php" method="GET">
-        <input type="text" name="name" placeholder="Search here" value="<?php echo htmlspecialchars($searchName); ?>" />
-        <button type="submit" class="search-button">Search</button>
-    </form>
-</div>
+                    <form action="search.php" method="GET">
+                        <input type="text" name="name" placeholder="Search here" value="<?php echo htmlspecialchars($searchName); ?>" />
+                        <button type="submit" class="search-button">Search</button>
+                    </form>
+                </div>
                 <div class="user-menu"></div>
             </div>
         </div>
@@ -273,16 +295,16 @@ function buildSortUrl($sortOption, $searchName, $category, $minPrice, $maxPrice,
                     <div class="filter-price">
                         <h3>Price:</h3>
                         <div class="price-range-inputs">
-                            <input type="number" name="min_price" min="0" max="300" placeholder="Min" value="<?php echo htmlspecialchars($minPrice); ?>">
+                            <input type="number" name="min_price" min="0" value="<?php echo htmlspecialchars($minPrice); ?>" placeholder="Min">
                             <span>to</span>
-                            <input type="number" name="max_price" min="0" max="300" placeholder="Max" value="<?php echo htmlspecialchars($maxPrice); ?>">
+                            <input type="number" name="max_price" min="0" value="<?php echo htmlspecialchars($maxPrice); ?>" placeholder="Max">
                         </div>
                     </div>
                     <button type="submit" class="filter-button">Search</button>
                 </form>
             </div>
             <section class="product-grid">
-            <div class="filter-box">
+                <div class="filter-box">
                     <span class="sort-label">Sort by:</span>
                     <a class="sort-label" href="<?php echo buildSortUrl('relevance', $searchName, $category, $minPrice, $maxPrice, $page); ?>"><button class="filter-btn">Relevance</button></a>
                     <a class="sort-label" href="<?php echo buildSortUrl('newest', $searchName, $category, $minPrice, $maxPrice, $page); ?>"><button class="filter-btn">Newest</button></a>
@@ -298,10 +320,10 @@ function buildSortUrl($sortOption, $searchName, $category, $minPrice, $maxPrice,
                 <div class="search-results">
                     <h1>Search Results:</h1>
                 </div>
-                <?php if (count($products) > 0) : ?>
-                    <?php foreach (array_chunk($products, 3) as $productRow) : ?>
+                <?php if (count($products) > 0): ?>
+                    <?php foreach (array_chunk($products, 3) as $productRow): ?>
                         <div class="product-row">
-                            <?php foreach ($productRow as $product) : ?>
+                            <?php foreach ($productRow as $product): ?>
                                 <div class="product-card">
                                     <a href="product_details.php?id=<?php echo $product['id']; ?>" class="product-image">
                                         <img src="<?php echo htmlspecialchars($product['image']); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>" />
@@ -314,8 +336,8 @@ function buildSortUrl($sortOption, $searchName, $category, $minPrice, $maxPrice,
                             <?php endforeach; ?>
                         </div>
                     <?php endforeach; ?>
-                <?php else : ?>
-                    <p>No products found.</p>
+                <?php else: ?>
+                    <p>No products found. Please try adjusting your search or filters, or check back later.</p>
                 <?php endif; ?>
             </section>
         </div>
@@ -337,34 +359,26 @@ function buildSortUrl($sortOption, $searchName, $category, $minPrice, $maxPrice,
         </div>
     </footer>
 
-    <?php if (isset($_SESSION['success_message'])): ?>
-        <div class="success-message" id="successPopup"><?php echo htmlspecialchars($_SESSION['success_message']); ?></div>
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                var popup = document.getElementById('successPopup');
-                popup.classList.add('show');
-                setTimeout(function() {
-                    popup.classList.remove('show');
-                    <?php unset($_SESSION['success_message']); ?>
-                }, 3000);
-            });
-        </script>
-    <?php endif; ?>
-
     <?php if (isset($_SESSION['error_message'])): ?>
-        <div class="error-message" id="errorPopup"><?php echo htmlspecialchars($_SESSION['error_message']); ?></div>
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                var popup = document.getElementById('errorPopup');
-                popup.classList.add('show');
-                setTimeout(function() {
-                    popup.classList.remove('show');
-                    <?php unset($_SESSION['error_message']); ?>
-                }, 3000);
-            });
-        </script>
+        <div class="error-message show" id="errorPopup"><?php echo htmlspecialchars($_SESSION['error_message']); ?></div>
+        <?php unset($_SESSION['error_message']); ?>
+    <?php elseif (isset($_SESSION['success_message'])): ?>
+        <div class="success-message show" id="successPopup"><?php echo htmlspecialchars($_SESSION['success_message']); ?></div>
+        <?php unset($_SESSION['success_message']); ?>
     <?php endif; ?>
 
-    <script src="./js/popup.js"></script>
+    <script>
+        // Tự động ẩn thông báo sau 3 giây
+        document.addEventListener('DOMContentLoaded', function() {
+            const popups = document.querySelectorAll('.success-message, .error-message');
+            popups.forEach(popup => {
+                if (popup.classList.contains('show')) {
+                    setTimeout(() => {
+                        popup.classList.remove('show');
+                    }, 3000);
+                }
+            });
+        });
+    </script>
 </body>
 </html>
