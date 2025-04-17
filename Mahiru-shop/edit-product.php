@@ -22,7 +22,7 @@ $stmt->execute();
 $result = $stmt->get_result();
 $product = $result->fetch_assoc();
 if (!$product) {
-    echo "<script>alert('Product doesn\'t exist!'); window.location='product-management.php';</script>";
+    echo "<script>alert('Product doesn\\'t exist!'); window.location='product-management.php';</script>";
     exit();
 }
 
@@ -52,16 +52,38 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["update"])) {
     $update_stmt->close();
 }
 
-// Chỉ ẩn sản phẩm khi bấm nút Delete
+// Xóa hoặc ẩn sản phẩm khi bấm nút Delete
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["delete"])) {
-    $hide_stmt = $conn->prepare("UPDATE products SET is_hidden = 1 WHERE id = ?");
-    $hide_stmt->bind_param("i", $id);
-    if ($hide_stmt->execute()) {
-        echo "<script>alert('Product hidden successfully!'); window.location='product-management.php';</script>";
+    // Kiểm tra xem sản phẩm có nằm trong đơn hàng nào không
+    $check_stmt = $conn->prepare("SELECT COUNT(*) as total FROM order_items WHERE product_id = ?");
+    $check_stmt->bind_param("i", $id);
+    $check_stmt->execute();
+    $check_result = $check_stmt->get_result();
+    $row = $check_result->fetch_assoc();
+    $total_orders = $row['total'];
+    $check_stmt->close();
+
+    if ($total_orders > 0) {
+        // Nếu có trong đơn hàng, chỉ ẩn sản phẩm
+        $hide_stmt = $conn->prepare("UPDATE products SET is_hidden = 1 WHERE id = ?");
+        $hide_stmt->bind_param("i", $id);
+        if ($hide_stmt->execute()) {
+            echo "<script>alert('Product is in existing orders, so it was hidden instead of deleted.'); window.location='product-management.php';</script>";
+        } else {
+            echo "Lỗi khi ẩn sản phẩm: " . $conn->error;
+        }
+        $hide_stmt->close();
     } else {
-        echo "Lỗi: " . $conn->error;
+        // Nếu không có trong đơn hàng, xóa khỏi bảng
+        $delete_stmt = $conn->prepare("DELETE FROM products WHERE id = ?");
+        $delete_stmt->bind_param("i", $id);
+        if ($delete_stmt->execute()) {
+            echo "<script>alert('Product deleted successfully!'); window.location='product-management.php';</script>";
+        } else {
+            echo "Lỗi khi xóa sản phẩm: " . $conn->error;
+        }
+        $delete_stmt->close();
     }
-    $hide_stmt->close();
 }
 
 $conn->close();
@@ -123,13 +145,6 @@ $conn->close();
                                         echo "<option value=\"$cat\" $selected>$cat</option>";
                                     }
                                     ?>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="product-hidden">Hidden Status</label>
-                                <select id="product-hidden" name="product-hidden">
-                                    <option value="0" <?php if ($product['is_hidden'] == 0) echo "selected"; ?>>Enabled</option>
-                                    <option value="1" <?php if ($product['is_hidden'] == 1) echo "selected"; ?>>Disabled</option>
                                 </select>
                             </div>
                             <div class="form-group">
