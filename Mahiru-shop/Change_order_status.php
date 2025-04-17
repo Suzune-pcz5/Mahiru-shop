@@ -35,6 +35,9 @@ if (!$order) {
     exit();
 }
 
+// Xác định trạng thái hiện tại
+$currentStatus = $order['status'];
+
 // Xử lý cập nhật trạng thái khi form được submit
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $newStatus = isset($_POST['new-status']) ? $_POST['new-status'] : '';
@@ -42,18 +45,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Kiểm tra trạng thái mới có hợp lệ không
     $validStatuses = ['pending', 'processing', 'confirmed', 'completed', 'cancelled'];
     if (in_array($newStatus, $validStatuses)) {
-        // Cập nhật trạng thái trong cơ sở dữ liệu
-        $updateStmt = $conn->prepare("UPDATE orders SET status = :status WHERE id = :order_id");
-        $updateStmt->bindValue(':status', $newStatus, PDO::PARAM_STR);
-        $updateStmt->bindValue(':order_id', $orderId, PDO::PARAM_INT);
-        $updateStmt->execute();
+        // Kiểm tra logic trạng thái
+        $isValidTransition = false;
 
-        // Chuyển hướng về trang chi tiết hóa đơn với thông báo
-        header("Location: detail-order.php?id=$orderId&message=Status updated successfully!");
-        exit();
+        if ($currentStatus === 'pending') {
+            // Từ pending có thể chuyển sang processing, confirmed, completed, cancelled
+            $isValidTransition = in_array($newStatus, ['processing', 'confirmed', 'completed', 'cancelled']);
+        } elseif ($currentStatus === 'processing') {
+            // Từ processing có thể chuyển sang confirmed, completed, cancelled
+            $isValidTransition = in_array($newStatus, ['confirmed', 'completed', 'cancelled']);
+        } elseif ($currentStatus === 'confirmed') {
+            // Từ confirmed có thể chuyển sang completed, cancelled
+            $isValidTransition = in_array($newStatus, ['completed', 'cancelled']);
+        }
+
+        if ($isValidTransition) {
+            // Cập nhật trạng thái trong cơ sở dữ liệu
+            $updateStmt = $conn->prepare("UPDATE orders SET status = :status WHERE id = :order_id");
+            $updateStmt->bindValue(':status', $newStatus, PDO::PARAM_STR);
+            $updateStmt->bindValue(':order_id', $orderId, PDO::PARAM_INT);
+            $updateStmt->execute();
+
+            // Chuyển hướng về trang chi tiết hóa đơn với thông báo
+            header("Location: detail-order.php?id=$orderId&message=Status updated successfully!");
+            exit();
+        } else {
+            $error = "Invalid status transition.";
+        }
     } else {
         $error = "Invalid status selected.";
     }
+}
+
+// Xác định trạng thái có thể cập nhật được hay không
+$canUpdate = !in_array($currentStatus, ['completed', 'cancelled']);
+
+// Xác định các trạng thái có thể chọn trong dropdown
+$availableStatuses = [];
+if ($currentStatus === 'pending') {
+    $availableStatuses = ['processing', 'confirmed', 'completed', 'cancelled'];
+} elseif ($currentStatus === 'processing') {
+    $availableStatuses = ['confirmed', 'completed', 'cancelled'];
+} elseif ($currentStatus === 'confirmed') {
+    $availableStatuses = ['completed', 'cancelled'];
 }
 ?>
 
@@ -95,6 +129,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php if (isset($error)): ?>
                     <p style="color: red;"><?php echo htmlspecialchars($error); ?></p>
                 <?php endif; ?>
+                <?php if (!$canUpdate): ?>
+                    <p style="color: red;">This order's status cannot be updated because it is already <?php echo htmlspecialchars(ucfirst($currentStatus)); ?>.</p>
+                <?php endif; ?>
                 <form id="orderStatusForm" method="POST" action="">
                     <div class="form-group">
                         <label for="order-id">Order ID:</label>
@@ -102,27 +139,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                     <div class="form-group">
                         <label for="current-status">Current Status:</label>
-                        <input type="text" id="current-status" name="current-status" value="<?php echo htmlspecialchars(ucfirst($order['status'])); ?>" readonly>
+                        <input type="text" id="current-status" name="current-status" value="<?php echo htmlspecialchars(ucfirst($currentStatus)); ?>" readonly>
                     </div>
                     <div class="form-group">
                         <label for="new-status">New Status:</label>
-                        <select id="new-status" name="new-status">
+                        <select id="new-status" name="new-status" <?php if (!$canUpdate) echo 'disabled'; ?>>
                             <option value="">Select new status</option>
-                            <option value="pending" <?php if ($order['status'] === 'pending') echo 'selected'; ?>>Pending</option>
-                            <option value="processing" <?php if ($order['status'] === 'processing') echo 'selected'; ?>>Processing</option>
-                            <option value="confirmed" <?php if ($order['status'] === 'confirmed') echo 'selected'; ?>>Confirmed</option>
-                            <option value="completed" <?php if ($order['status'] === 'completed') echo 'selected'; ?>>Completed</option>
-                            <option value="cancelled" <?php if ($order['status'] === 'cancelled') echo 'selected'; ?>>Cancelled</option>
+                            <?php foreach ($availableStatuses as $status): ?>
+                                <option value="<?php echo $status; ?>"><?php echo ucfirst($status); ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
-                    <button type="submit">Update Status</button>
+                    <button type="submit" <?php if (!$canUpdate) echo 'disabled'; ?>>Update Status</button>
                 </form>
             </div>
         </div>
     </main>
     <footer>
         <div class="container">
-            <p>©Mahiru Shop. We are pleased to serve you.</p>
+            <p>© Mahiru Shop. We are pleased to serve you.</p>
         </div>
     </footer>
     <script>
