@@ -43,7 +43,7 @@ $limit = 9;
 $page = isset($_GET['p']) ? (int)$_GET['p'] : 1;
 $offset = ($page - 1) * $limit;
 
-// Validate price range if both values are provided
+// Validate price range
 if ($minPrice > $maxPrice) {
     $temp = $minPrice;
     $minPrice = $maxPrice;
@@ -112,6 +112,20 @@ $totalPages = ceil($totalProducts / $limit);
             width: 80px;
             padding: 5px;
         }
+        .success-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 1000;
+            display: none;
+        }
+        .success-message.show {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -121,7 +135,7 @@ $totalPages = ceil($totalProducts / $limit);
             <div class="contact-info">
                 <span><i class="fas fa-phone"></i> 012345678</span>
                 <span><i class="fas fa-envelope"></i> mahiru@gmail.com</span>
-                <span><i class="fas fa-map-marker-alt"></i>1104 Wall Street</span>
+                <span><i class="fas fa-map-marker-alt"></i> 1104 Wall Street</span>
             </div>
             <div class="user-actions">
                 <a class="login-link">
@@ -135,7 +149,7 @@ $totalPages = ceil($totalProducts / $limit);
             </div>
         </div>
     </div>
-    <div class=" FuelPHP
+    <div class="main-header">
         <div class="container">
             <div class="logo">
                 <a href="index.php" class="logo-link"><h1>MAHIRU<span>.</span></h1></a>
@@ -147,17 +161,16 @@ $totalPages = ceil($totalProducts / $limit);
                 </form>
             </div>
             <div class="user-menu">
+                <a href="cart.php" class="icon"><i class="fas fa-shopping-cart"></i></a>
             </div>
         </div>
     </div>
-    <nav>
+    <nav class="category-nav">
         <div class="container">
-            <ul>
+            <ul class="category-list">
                 <li><a href="index.php">Home</a></li>
                 <?php foreach ($categories as $cat): ?>
-                    <li><a href="index.php?category=<?php echo htmlspecialchars($cat['category']); ?>">
-                        <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $cat['category']))); ?>
-                    </a></li>
+                    <li><a href="index.php?category=<?= urlencode($cat['category']) ?>"> <?= htmlspecialchars($cat['category']) ?> </a></li>
                 <?php endforeach; ?>
             </ul>
         </div>
@@ -185,9 +198,9 @@ $totalPages = ceil($totalProducts / $limit);
                 <div class="filter-price">
                     <h3>Price:</h3>
                     <div class="price-range-inputs">
-                        <input type="number" name="min_price" min="0" value="<?php echo htmlspecialchars($minPrice); ?>" placeholder="Min">
+                        <input type="number" name="min_price" min="0" max="300" value="<?php echo htmlspecialchars($minPrice); ?>" placeholder="Min">
                         <span>to</span>
-                        <input type="number" name="max_price" min="0" value="<?php echo htmlspecialchars($maxPrice); ?>" placeholder="Max">
+                        <input type="number" name="max_price" min="0" max="300" value="<?php echo htmlspecialchars($maxPrice); ?>" placeholder="Max">
                     </div>
                 </div>
                 <button type="submit" class="filter-button" style="margin-top: 10px">Search</button>
@@ -237,5 +250,18 @@ $totalPages = ceil($totalProducts / $limit);
     </div>
 </footer>
 
+<?php if (isset($_SESSION['success_message'])): ?>
+    <div class="success-message" id="successPopup"><?php echo htmlspecialchars($_SESSION['success_message']); ?></div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var popup = document.getElementById('successPopup');
+            popup.classList.add('show');
+            setTimeout(function() {
+                popup.classList.remove('show');
+                <?php unset($_SESSION['success_message']); ?>
+            }, 3000);
+        });
+    </script>
+<?php endif; ?>
 </body>
 </html>
