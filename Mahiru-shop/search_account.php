@@ -73,11 +73,11 @@ $categories = $categoryQuery->fetchAll(PDO::FETCH_ASSOC);
 // Handle search, filter, and sort
 $searchName = isset($_GET['name']) ? trim($_GET['name']) : '';
 $category = isset($_GET['category']) ? $_GET['category'] : 'all';
-$minPrice = isset($_GET['min_price']) ? (int)$_GET['min_price'] : 0;
-$maxPrice = isset($_GET['max_price']) ? (int)$_GET['max_price'] : 300;
+$minPrice = isset($_GET['min_price']) && $_GET['min_price'] !== '' ? (int)$_GET['min_price'] : 0;
+$maxPrice = isset($_GET['max_price']) && $_GET['max_price'] !== '' ? (int)$_GET['max_price'] : 300;
 $sort = isset($_GET['sort']) ? $_GET['sort'] : 'relevance';
 
-// Validate price range
+// Validate price range if both values are provided
 if ($minPrice > $maxPrice) {
     $temp = $minPrice;
     $minPrice = $maxPrice;
@@ -90,11 +90,13 @@ $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $offset = ($page - 1) * $limit;
 
 // Count total products
-$countSql = "SELECT COUNT(*) FROM products WHERE is_hidden = 0 AND price BETWEEN :min_price AND :max_price";
-$params = [
-    ':min_price' => $minPrice,
-    ':max_price' => $maxPrice
-];
+$countSql = "SELECT COUNT(*) FROM products WHERE is_hidden = 0";
+$params = [];
+if (!($minPrice === 0 && $maxPrice === 300)) {
+    $countSql .= " AND price BETWEEN :min_price AND :max_price";
+    $params[':min_price'] = $minPrice;
+    $params[':max_price'] = $maxPrice;
+}
 if (!empty($searchName)) {
     $countSql .= " AND name LIKE :name";
     $params[':name'] = "%$searchName%";
@@ -110,11 +112,13 @@ $totalProducts = $countStmt->fetchColumn();
 $totalPages = ceil($totalProducts / $limit);
 
 // Build product query
-$sql = "SELECT * FROM products WHERE is_hidden = 0 AND price BETWEEN :min_price AND :max_price";
-$params = [
-    ':min_price' => $minPrice,
-    ':max_price' => $maxPrice
-];
+$sql = "SELECT * FROM products WHERE is_hidden = 0";
+$params = [];
+if (!($minPrice === 0 && $maxPrice === 300)) {
+    $sql .= " AND price BETWEEN :min_price AND :max_price";
+    $params[':min_price'] = $minPrice;
+    $params[':max_price'] = $maxPrice;
+}
 if (!empty($searchName)) {
     $sql .= " AND name LIKE :name";
     $params[':name'] = "%$searchName%";
@@ -230,7 +234,7 @@ function buildSortUrl($sortOption, $searchName, $category, $minPrice, $maxPrice,
                         <?php endif; ?>
                         <div class="login-dropdown">
                             <?php if (strtolower($currentUser['role']) === 'admin'): ?>
-                                <a href="admin.php" class="login-option">Edit</a>
+                                <a href="edit.php" class="login-option">Edit</a>
                             <?php else: ?>
                                 <a href="order_history.php" class="login-option">Order history</a>
                             <?php endif; ?>
@@ -300,9 +304,9 @@ function buildSortUrl($sortOption, $searchName, $category, $minPrice, $maxPrice,
                     <div class="filter-price">
                         <h3>Price:</h3>
                         <div class="price-range-inputs">
-                            <input type="number" name="min_price" min="0" max="300" placeholder="Min" value="<?php echo htmlspecialchars($minPrice); ?>">
+                            <input type="number" name="min_price" min="0" value="<?php echo htmlspecialchars($minPrice); ?>" placeholder="Min">
                             <span>to</span>
-                            <input type="number" name="max_price" min="0" max="300" placeholder="Max" value="<?php echo htmlspecialchars($maxPrice); ?>">
+                            <input type="number" name="max_price" min="0" value="<?php echo htmlspecialchars($maxPrice); ?>" placeholder="Max">
                         </div>
                     </div>
                     <button type="submit" class="filter-button">Search</button>
