@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// Kết nối cơ sở dữ liệu
+// Kết nối CSDL
 $servername = "localhost";
 $username   = "root";
 $password   = "";
@@ -15,17 +15,16 @@ try {
     exit();
 }
 
-// Lấy giá trị ngày từ form (GET)
+// Lấy ngày
 $fromDate = $_GET['start-date'] ?? '';
 $toDate   = $_GET['end-date'] ?? '';
 
-// Tạo truy vấn và điều kiện lọc
+// Truy vấn top 5 khách có tổng mua cao nhất
 $query = "
     SELECT u.id, u.username, SUM(o.total_price) AS total_revenue
     FROM users u
     JOIN orders o ON u.id = o.user_id
     WHERE o.status = 'completed'
-
 ";
 $params = [];
 
@@ -89,19 +88,17 @@ $topCustomers = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
 
         <section class="admin-content">
-            <h3>Top 5 Customers (Delivered Orders Only)</h3>
+            <h3>Top 5 Customers</h3>
 
             <!-- Bộ lọc thời gian -->
             <div class="filters">
                 <form method="GET" action="" class="filters-row">
                     <div class="filter-group">
-                        <label class="filter-label"></label>
                         <div class="date-range">
                             <div>
                                 <label>From:</label>
                                 <input 
                                     type="date" 
-                                    id="start-date" 
                                     name="start-date"
                                     value="<?php echo htmlspecialchars($fromDate); ?>"
                                 />
@@ -110,7 +107,6 @@ $topCustomers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <label>To:</label>
                                 <input 
                                     type="date" 
-                                    id="end-date" 
                                     name="end-date"
                                     value="<?php echo htmlspecialchars($toDate); ?>"
                                 />
@@ -127,28 +123,28 @@ $topCustomers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <tr>
                         <th>#</th>
                         <th>Customer</th>
-                        <th>Revenue</th>
+                        <th>Total Revenue</th>
                         <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php if (!empty($topCustomers)): ?>
-                        <?php $rank = 1; ?>
-                        <?php foreach ($topCustomers as $customer): ?>
-                            <tr>
-                                <td><?php echo $rank++; ?></td>
-                                <td><?php echo htmlspecialchars($customer['username']); ?></td>
-                                <td>$<?php echo number_format($customer['total_revenue'], 2); ?></td>
-                                <td>
-                                    <a href="./customer-invoices.php?user_id=<?php echo $customer['id']; ?>" class="btn">View Invoices</a>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php else: ?>
+                <?php if (!empty($topCustomers)): ?>
+                    <?php $rank = 1; ?>
+                    <?php foreach ($topCustomers as $customer): ?>
                         <tr>
-                            <td colspan="4">No customers found in selected range.</td>
+                            <td><?php echo $rank++; ?></td>
+                            <td><?php echo htmlspecialchars($customer['username']); ?></td>
+                            <td>$<?php echo number_format($customer['total_revenue'], 2); ?></td>
+                            <td>
+                                    <a href="./customer-invoices.php?user_id=<?php echo $customer['id']; ?>" class="btn">View Invoices</a>
+                            </td>
                         </tr>
-                    <?php endif; ?>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="3">No customers found in selected range.</td>
+                    </tr>
+                <?php endif; ?>
                 </tbody>
             </table>
         </section>
